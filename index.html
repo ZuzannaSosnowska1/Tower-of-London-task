@@ -14,421 +14,1082 @@
   <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.1.3"></script>
 
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; }
-    .instructions { max-width: 760px; margin: 0 auto; text-align: left; }
-    .boards-wrap {
-      display: flex; justify-content: center; align-items: flex-start;
-      gap: 34px; flex-wrap: wrap; margin: 22px auto; max-width: 900px;
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
     }
-    .board-panel { width: min(100%, 390px); }
-    .board-panel h3 { margin-bottom: 8px; }
+
+    .instructions {
+      max-width: 760px;
+      margin: 0 auto;
+      text-align: left;
+    }
+
+    .boards-wrap {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 34px;
+      flex-wrap: wrap;
+      margin: 22px auto;
+      max-width: 900px;
+    }
+
+    .board-panel {
+      width: min(100%, 390px);
+    }
+
+    .board-panel h3 {
+      margin-bottom: 8px;
+    }
+
     .board {
-      display: flex; align-items: flex-end; justify-content: space-around;
-      gap: 8px; min-height: 260px; padding: 12px 8px 30px;
-      border: 1px solid #ddd; border-radius: 8px; background: #fafafa;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-around;
+      gap: 8px;
+      min-height: 260px;
+      padding: 12px 8px 30px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: #fafafa;
       box-sizing: border-box;
     }
+
     .peg {
-      position: relative; width: 30%; min-width: 75px; height: 220px;
-      border-bottom: 5px solid #555; box-sizing: border-box;
+      position: relative;
+      width: 30%;
+      min-width: 75px;
+      height: 220px;
+      border-bottom: 5px solid #555;
+      box-sizing: border-box;
     }
+
     .rod {
-      position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
-      width: 8px; background: #777; border-radius: 5px 5px 0 0;
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 8px;
+      background: #777;
+      border-radius: 5px 5px 0 0;
       pointer-events: none;
     }
+
     .peg-label {
-      position: absolute; bottom: -26px; left: 0; width: 100%;
-      font-weight: bold; pointer-events: none;
+      position: absolute;
+      bottom: -26px;
+      left: 0;
+      width: 100%;
+      font-weight: bold;
+      pointer-events: none;
     }
+
     .ball {
-      position: absolute; left: 50%; transform: translateX(-50%);
-      width: 48px; height: 38px; border-radius: 50%;
-      color: #fff; font-weight: bold; font-size: 15px;
-      border: 2px solid rgba(0,0,0,.18); cursor: pointer; z-index: 2;
-      display: flex; align-items: center; justify-content: center;
-      padding: 0; box-sizing: border-box;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 48px;
+      height: 38px;
+      border-radius: 50%;
+      color: #000;
+      font-weight: bold;
+      font-size: 15px;
+      border: 2px solid rgba(0,0,0,.18);
+      cursor: pointer;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      box-sizing: border-box;
     }
-    .ball.selected { outline: 4px solid #222; outline-offset: 2px; }
-    .ball:disabled { cursor: default; opacity: 1; }
-    .goal-ball { cursor: default; }
-    #status { min-height: 28px; margin: 8px auto; font-weight: bold; color: #8a2d22; }
-    #stats { margin: 10px 0; font-size: 17px; }
-    #finish-round { margin: 8px; padding: 10px 18px; font-size: 16px; cursor: pointer; }
-    .capacity-note { font-size: 13px; color: #555; margin-top: 6px; }
+
+    .ball.selected {
+      outline: 4px solid #222;
+      outline-offset: 2px;
+    }
+
+    .ball:disabled {
+      cursor: default;
+      opacity: 1;
+    }
+
+    .goal-ball {
+      cursor: default;
+    }
+
+    #status {
+      min-height: 28px;
+      margin: 8px auto;
+      font-weight: bold;
+      color: #8a2d22;
+    }
+
+    #stats {
+      margin: 10px 0;
+      font-size: 17px;
+      line-height: 1.8;
+    }
+
+    #finish-round {
+      margin: 8px;
+      padding: 10px 18px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .capacity-note {
+      font-size: 13px;
+      color: #555;
+      margin-top: 6px;
+    }
+
     @media (max-width: 600px) {
-      .boards-wrap { gap: 12px; }
-      .board-panel { width: 100%; }
-      .board { min-height: 235px; }
-      .peg { min-width: 65px; height: 195px; }
-      .ball { width: 42px; height: 34px; }
+      .boards-wrap {
+        gap: 12px;
+      }
+
+      .board-panel {
+        width: 100%;
+      }
+
+      .board {
+        min-height: 235px;
+      }
+
+      .peg {
+        min-width: 65px;
+        height: 195px;
+      }
+
+      .ball {
+        width: 42px;
+        height: 34px;
+      }
     }
   </style>
 </head>
+
 <body>
-  <div id="experiment"></div>
 
-  <script>
-    // =========================================================
-    // SETTINGS YOU CAN CHANGE
-    // =========================================================
+<div id="experiment"></div>
 
-    // Peg capacities from left to right: A can hold 3 balls,
-    // B can hold 2 balls, and C can hold 1 ball.
-    const PEGS = ["A", "B", "C"];
-    const CAPACITY = { A: 3, B: 2, C: 1 };
+<script>
 
-    // Each array lists balls from BOTTOM to TOP.
-    // Ball numbers identify the colored balls; they are not sizes.
-    // You can edit the start and goal arrangements below.
-    const rounds = [
-     {
-        
-       id: "TOL_test",
-        start: { A: [1], B: [2], C: [3] },
-        goal:  { A: [1 ,2, 3], B: [], C: [] }
-      },
-      {
-        id: "TOL_01",
-        start: { A: [3, 1], B: [2], C: [] },
-        goal:  { A: [2], B: [1, 3], C: [] }
-      },
-      {
-        id: "TOL_02",
-        start: { A: [], B: [3, 2], C: [1] },
-        goal:  { A: [3], B: [1],  C: [2] }
-      },
-      {
-        id: "TOL_03",
-        start: { A: [1], B: [2, 3], C: [] },
-        goal:  { A: [3, 2, 1], B: [], C: [] }
-      },
-      {
-        id: "TOL_04",
-        start: { A: [3, 2], B: [1], C: [] },
-        goal:  { A: [2, 1, 3], B: [], C: [] }
-      },
-      {
-        id: "TOL_05",
-        start: { A: [2, 3], B: [1], C: [] },
-        goal:  { A: [1, 3], B: [], C: [2] }
-      },
-      {
-        id: "TOL_06",
-        start: { A: [3, 2], B: [], C: [1] },
-        goal:  { A: [2, 1, 3], B: [], C: [] }
-      },
-      {
-        id: "TOL_07",
-        start: { A: [2, 3], B: [1], C: [] },
-        goal:  { A: [1, 2, 3], B: [], C: [] }
-      },
-      {
-        id: "TOL_08",
-        start: { A: [3. 1], B: [2], C: [] },
-        goal:  { A: [1, 2], B: [3], C: [] }
-      },
-      {
-        id: "TOL_09",
-        start: { A: [1], B: [3], C: [2] },
-        goal:  { A: [2], B: [1], C: [3] }
-      }];
+// =========================================================
+// SETTINGS YOU CAN CHANGE
+// =========================================================
 
-    const BALL_COLORS = {
-      1: "#FFFB00",
-      2: "#0084FF",
-      3: "#FF0000"
-    };
+// Peg capacities
+const PEGS = ["A", "B", "C"];
 
-    // Keep your existing final Google Form URL and entry IDs here.
-    // This form is opened after the task. Confirm the entry IDs still
-    // match the questions in your own Google Form.
-    const GOOGLE_FORM_BASE =
-      "https://docs.google.com/forms/d/e/1FAIpQLSe2xc_3B20WsNyfke8pMoPjkC4HukajEcNG3HWK6LL_wsBx3Q/viewform?usp=pp_url";
+const CAPACITY = {
+  A: 3,
+  B: 2,
+  C: 1
+};
 
-    let participantId = "";
-    const allRoundResults = [];
+// Maximum number of moves allowed PER ROUND
+// Change 10 to any number you want.
+const MAX_MOVES_PER_ROUND = 10;
 
-    const jsPsych = initJsPsych({
-      display_element: "experiment",
-      on_finish: function () {
-        // Overall summary passed to the existing Google Form.
-        const totalMoves = allRoundResults.reduce((sum, r) => sum + r.moves, 0);
-        const totalTime = allRoundResults.reduce((sum, r) => sum + r.time_seconds, 0);
-        const allSolved = allRoundResults.length === rounds.length &&
-                          allRoundResults.every(r => r.solved);
 
-        const url = GOOGLE_FORM_BASE +
-          "&entry.146328682=" + encodeURIComponent(participantId) +
-          "&entry.558532723=" + encodeURIComponent(totalMoves) +
-          "&entry.1869517534=" + encodeURIComponent(totalTime) +
-          "&entry.1053943810=" + encodeURIComponent(allSolved);
+// =========================================================
+// EXPERIMENT ROUNDS
+// =========================================================
 
-        window.location.href = url;
-      }
-    });
+const rounds = [
 
-    const timeline = [];
+  {
+    id: "TOL_test",
+    start: { A: [1], B: [2], C: [3] },
+    goal:  { A: [1, 2, 3], B: [], C: [] }
+  },
 
-    timeline.push({
-      type: jsPsychSurveyText,
-      questions: [{
-        prompt: "Participant ID:",
-        name: "participant_id",
-        required: true
-      }],
-      button_label: "Continue",
-      on_finish: function (data) {
-        const response = data.response || {};
-        participantId = String(response.participant_id || "").trim();
-      }
-    });
+  {
+    id: "TOL_01",
+    start: { A: [3, 1], B: [2], C: [] },
+    goal:  { A: [2], B: [1, 3], C: [] }
+  },
 
-    timeline.push({
-      type: jsPsychHtmlButtonResponse,
-      stimulus: `
-        <div class="instructions">
-          <h2>Tower of London task</h2>
-          <p>In each round, you will see a starting arrangement and a goal arrangement.
-          Your task is to make the arrangement on the left match the goal on the right.</p>
-          <ul>
-            <li>Click the top ball on a peg to select it.</li>
-            <li>Then click the peg where you want to place that ball.</li>
-            <li>You can move only one ball at a time.</li>
-            <li>A ball can be placed on top of any other ball.</li>
-            <li>Pegs have different capacities: A holds up to 3 balls, B up to 2, and C up to 1.</li>
-            <li>A peg cannot hold more balls than its capacity.</li>
-            <li>If you click the selected ball's peg again, the selection is cancelled.</li>
-            <li>When the left board matches the goal board, the round ends automatically.</li>
-          </ul>
-          <p>Try to reach the goal carefully. There are ${rounds.length} rounds.</p>
-        </div>`,
-      choices: ["Start"]
-    });
+  {
+    id: "TOL_02",
+    start: { A: [], B: [3, 2], C: [1] },
+    goal:  { A: [3], B: [1], C: [2] }
+  },
 
-    function clonePegs(pegs) {
-      return { A: [...pegs.A], B: [...pegs.B], C: [...pegs.C] };
+  {
+    id: "TOL_03",
+    start: { A: [1], B: [2, 3], C: [] },
+    goal:  { A: [3, 2, 1], B: [], C: [] }
+  },
+
+  {
+    id: "TOL_04",
+    start: { A: [3, 2], B: [1], C: [] },
+    goal:  { A: [2, 1, 3], B: [], C: [] }
+  },
+
+  {
+    id: "TOL_05",
+    start: { A: [2, 3], B: [1], C: [] },
+    goal:  { A: [1, 3], B: [], C: [2] }
+  },
+
+  {
+    id: "TOL_06",
+    start: { A: [3, 2], B: [], C: [1] },
+    goal:  { A: [2, 1, 3], B: [], C: [] }
+  },
+
+  {
+    id: "TOL_07",
+    start: { A: [2, 3], B: [1], C: [] },
+    goal:  { A: [1, 2, 3], B: [], C: [] }
+  },
+
+  {
+    id: "TOL_08",
+    start: { A: [3, 1], B: [2], C: [] },
+    goal:  { A: [1, 2], B: [3], C: [] }
+  },
+
+  {
+    id: "TOL_09",
+    start: { A: [1], B: [3], C: [2] },
+    goal:  { A: [2], B: [1], C: [3] }
+  }
+
+];
+
+
+// =========================================================
+// BALL COLORS
+// =========================================================
+
+const BALL_COLORS = {
+  1: "#FFFB00",
+  2: "#0084FF",
+  3: "#FF0000"
+};
+
+
+// =========================================================
+// GOOGLE FORM
+// =========================================================
+
+const GOOGLE_FORM_BASE =
+  "https://docs.google.com/forms/d/e/1FAIpQLSe2xc_3B20WsNyfke8pMoPjkC4HukajEcNG3HWK6LL_wsBx3Q/viewform?usp=pp_url";
+
+
+let participantId = "";
+
+const allRoundResults = [];
+
+
+// =========================================================
+// INITIALIZE jsPsych
+// =========================================================
+
+const jsPsych = initJsPsych({
+
+  display_element: "experiment",
+
+  on_finish: function () {
+
+    const totalMoves = allRoundResults.reduce(
+      (sum, r) => sum + r.moves, 0
+    );
+
+    const totalTime = allRoundResults.reduce(
+      (sum, r) => sum + r.time_seconds, 0
+    );
+
+    const allSolved =
+      allRoundResults.length === rounds.length &&
+      allRoundResults.every(r => r.solved);
+
+    const url = GOOGLE_FORM_BASE +
+      "&entry.146328682=" + encodeURIComponent(participantId) +
+      "&entry.558532723=" + encodeURIComponent(totalMoves) +
+      "&entry.1869517534=" + encodeURIComponent(totalTime) +
+      "&entry.1053943810=" + encodeURIComponent(allSolved);
+
+    window.location.href = url;
+
+  }
+
+});
+
+
+const timeline = [];
+
+
+// =========================================================
+// PARTICIPANT ID
+// =========================================================
+
+timeline.push({
+
+  type: jsPsychSurveyText,
+
+  questions: [
+    {
+      prompt: "Participant ID:",
+      name: "participant_id",
+      required: true
     }
+  ],
 
-    function sameArrangement(a, b) {
-      return PEGS.every(peg =>
-        a[peg].length === b[peg].length &&
-        a[peg].every((ball, i) => ball === b[peg][i])
+  button_label: "Continue",
+
+  on_finish: function (data) {
+
+    const response = data.response || {};
+
+    participantId = String(
+      response.participant_id || ""
+    ).trim();
+
+  }
+
+});
+
+
+// =========================================================
+// INSTRUCTIONS
+// =========================================================
+
+timeline.push({
+
+  type: jsPsychHtmlButtonResponse,
+
+  stimulus: `
+
+    <div class="instructions">
+
+      <h2>Tower of London task</h2>
+
+      <p>
+        In each round, you will see a starting arrangement
+        and a goal arrangement.
+        Your task is to make the arrangement on the left
+        match the goal on the right.
+      </p>
+
+      <ul>
+
+        <li>Click the top ball on a peg to select it.</li>
+
+        <li>Then click the peg where you want to place that ball.</li>
+
+        <li>You can move only one ball at a time.</li>
+
+        <li>A ball can be placed on top of any other ball.</li>
+
+        <li>
+          Pegs have different capacities:
+          A holds up to 3 balls, B up to 2, and C up to 1.
+        </li>
+
+        <li>A peg cannot hold more balls than its capacity.</li>
+
+        <li>
+          If you click the selected ball's peg again,
+          the selection is cancelled.
+        </li>
+
+        <li>
+          Each round has a maximum of
+          <strong>${MAX_MOVES_PER_ROUND} moves</strong>.
+        </li>
+
+        <li>
+          If you reach the maximum number of moves
+          without solving the problem, you will automatically
+          proceed to the next round.
+        </li>
+
+        <li>
+          When the left board matches the goal board,
+          the round ends automatically.
+        </li>
+
+      </ul>
+
+      <p>
+        There are ${rounds.length} rounds.
+        Try to reach the goal carefully.
+      </p>
+
+    </div>
+
+  `,
+
+  choices: ["Start"]
+
+});
+
+
+// =========================================================
+// HELPER FUNCTIONS
+// =========================================================
+
+function clonePegs(pegs) {
+
+  return {
+    A: [...pegs.A],
+    B: [...pegs.B],
+    C: [...pegs.C]
+  };
+
+}
+
+
+function sameArrangement(a, b) {
+
+  return PEGS.every(peg =>
+
+    a[peg].length === b[peg].length &&
+
+    a[peg].every((ball, i) => ball === b[peg][i])
+
+  );
+
+}
+
+
+// =========================================================
+// DRAW BOARD
+// =========================================================
+
+function renderBoard(
+  boardElement,
+  pegState,
+  isGoal,
+  selected,
+  onSelectBall,
+  onSelectPeg
+) {
+
+  boardElement.innerHTML = "";
+
+  PEGS.forEach(pegName => {
+
+    const pegEl = document.createElement("div");
+
+    pegEl.className = "peg";
+
+    pegEl.dataset.peg = pegName;
+
+
+    const rod = document.createElement("div");
+
+    rod.className = "rod";
+
+    rod.style.height =
+      (CAPACITY[pegName] * 48 + 16) + "px";
+
+    pegEl.appendChild(rod);
+
+
+    pegState[pegName].forEach((ballNumber, index) => {
+
+      const ball = document.createElement("button");
+
+      ball.type = "button";
+
+      ball.className = "ball" + (
+
+        !isGoal &&
+        selected &&
+        selected.peg === pegName &&
+        selected.ball === ballNumber
+
+          ? " selected"
+          : ""
+
       );
-    }
 
-    function renderBoard(boardElement, pegState, isGoal, selected, onSelectBall, onSelectPeg) {
-      boardElement.innerHTML = "";
+      ball.textContent = ballNumber;
 
-      PEGS.forEach(pegName => {
-        const pegEl = document.createElement("div");
-        pegEl.className = "peg";
-        pegEl.dataset.peg = pegName;
+      ball.style.backgroundColor =
+        BALL_COLORS[ballNumber];
 
-        const rod = document.createElement("div");
-        rod.className = "rod";
-        // The rod height visually reflects the maximum capacity.
-        rod.style.height = (CAPACITY[pegName] * 48 + 16) + "px";
-        pegEl.appendChild(rod);
+      ball.style.bottom =
+        (index * 42 + 3) + "px";
 
-        pegState[pegName].forEach((ballNumber, index) => {
-          const ball = document.createElement("button");
-          ball.type = "button";
-          ball.className = "ball" + (
-            !isGoal && selected &&
-            selected.peg === pegName &&
-            selected.ball === ballNumber ? " selected" : ""
-          );
-          ball.textContent = ballNumber;
-          ball.style.backgroundColor = BALL_COLORS[ballNumber];
-          ball.style.bottom = (index * 42 + 3) + "px";
-          ball.setAttribute("aria-label", "Ball " + ballNumber + " on peg " + pegName);
+      ball.setAttribute(
+        "aria-label",
+        "Ball " + ballNumber + " on peg " + pegName
+      );
 
-          const isTop = index === pegState[pegName].length - 1;
-          if (isGoal || !isTop) {
-            ball.disabled = true;
-          } else {
-            ball.addEventListener("click", event => {
-              event.stopPropagation();
-              onSelectBall(pegName, ballNumber);
-            });
-          }
 
-          pegEl.appendChild(ball);
+      const isTop =
+        index === pegState[pegName].length - 1;
+
+
+      if (isGoal || !isTop) {
+
+        ball.disabled = true;
+
+      } else {
+
+        ball.addEventListener("click", event => {
+
+          event.stopPropagation();
+
+          onSelectBall(pegName, ballNumber);
+
         });
 
-        const label = document.createElement("div");
-        label.className = "peg-label";
-        label.textContent = pegName + " (max " + CAPACITY[pegName] + ")";
-        pegEl.appendChild(label);
+      }
 
-        if (!isGoal) {
-          pegEl.addEventListener("click", () => onSelectPeg(pegName));
-          pegEl.style.cursor = "pointer";
-        }
-        boardElement.appendChild(pegEl);
+      pegEl.appendChild(ball);
+
+    });
+
+
+    const label = document.createElement("div");
+
+    label.className = "peg-label";
+
+    label.textContent =
+      pegName + " (max " + CAPACITY[pegName] + ")";
+
+    pegEl.appendChild(label);
+
+
+    if (!isGoal) {
+
+      pegEl.addEventListener("click", () => {
+
+        onSelectPeg(pegName);
+
       });
+
+      pegEl.style.cursor = "pointer";
+
     }
 
-    rounds.forEach((problem, roundIndex) => {
-      timeline.push({
-        type: jsPsychHtmlButtonResponse,
-        stimulus: `
-          <h2>Round ${roundIndex + 1} of ${rounds.length}</h2>
-          <div id="stats">Moves: <span id="move-count">0</span>
-            &nbsp; | &nbsp; Time: <span id="elapsed-time">0</span> seconds</div>
-          <div class="boards-wrap">
-            <div class="board-panel">
-              <h3>Your arrangement</h3>
-              <div id="start-board" class="board"></div>
-              <div class="capacity-note">Move the balls on this board.</div>
-            </div>
-            <div class="board-panel">
-              <h3>Goal arrangement</h3>
-              <div id="goal-board" class="board"></div>
-              <div class="capacity-note">Match this arrangement exactly.</div>
-            </div>
+    boardElement.appendChild(pegEl);
+
+  });
+
+}
+
+
+// =========================================================
+// EXPERIMENT ROUNDS
+// =========================================================
+
+rounds.forEach((problem, roundIndex) => {
+
+  timeline.push({
+
+    type: jsPsychHtmlButtonResponse,
+
+    stimulus: `
+
+      <h2>Round ${roundIndex + 1} of ${rounds.length}</h2>
+
+      <div id="stats">
+
+        Moves:
+        <span id="move-count">0</span>
+
+        &nbsp; | &nbsp;
+
+        Maximum moves:
+        ${MAX_MOVES_PER_ROUND}
+
+        &nbsp; | &nbsp;
+
+        Remaining:
+        <span id="remaining-moves">
+          ${MAX_MOVES_PER_ROUND}
+        </span>
+
+        &nbsp; | &nbsp;
+
+        Time:
+        <span id="elapsed-time">0</span> seconds
+
+      </div>
+
+
+      <div class="boards-wrap">
+
+        <div class="board-panel">
+
+          <h3>Your arrangement</h3>
+
+          <div id="start-board" class="board"></div>
+
+          <div class="capacity-note">
+            Move the balls on this board.
           </div>
-          <div id="status" aria-live="polite">Select the top ball, then select a destination peg.</div>
-          <button id="finish-round" type="button">End this round</button>
-        `,
-        choices: [],
-        data: { task: "tower_of_london", round_id: problem.id, round_number: roundIndex + 1 },
-        on_load: function () {
-          let pegs = clonePegs(problem.start);
-          const goal = clonePegs(problem.goal);
-          let selected = null;
-          let moves = 0;
-          let finished = false;
-          const moveLog = [];
-          const startTime = Date.now();
-          let intervalId = null;
 
-          const startBoard = document.getElementById("start-board");
-          const goalBoard = document.getElementById("goal-board");
-          const statusEl = document.getElementById("status");
-          const moveCountEl = document.getElementById("move-count");
-          const elapsedTimeEl = document.getElementById("elapsed-time");
-          const finishButton = document.getElementById("finish-round");
+        </div>
 
-          function elapsedSeconds() {
-            return Math.floor((Date.now() - startTime) / 1000);
-          }
 
-          function updateTime() {
-            if (!finished) elapsedTimeEl.textContent = elapsedSeconds();
-          }
+        <div class="board-panel">
 
-          function draw() {
-            renderBoard(
-              startBoard, pegs, false, selected,
-              function (pegName, ballNumber) {
-                if (finished) return;
-                selected = { peg: pegName, ball: ballNumber };
-                statusEl.textContent = "Ball selected. Now click a destination peg.";
-                draw();
-              },
-              function (destination) {
-                if (finished || selected === null) return;
+          <h3>Goal arrangement</h3>
 
-                if (destination === selected.peg) {
-                  selected = null;
-                  statusEl.textContent = "Selection cancelled.";
-                  draw();
-                  return;
-                }
+          <div id="goal-board" class="board"></div>
 
-                if (pegs[destination].length >= CAPACITY[destination]) {
-                  statusEl.textContent = "That peg is full. Choose a peg with free space.";
-                  return;
-                }
+          <div class="capacity-note">
+            Match this arrangement exactly.
+          </div>
 
-                const source = selected.peg;
-                const ballNumber = pegs[source][pegs[source].length - 1];
+        </div>
 
-                if (ballNumber !== selected.ball) {
-                  selected = null;
-                  draw();
-                  return;
-                }
+      </div>
 
-                pegs[source].pop();
-                pegs[destination].push(ballNumber);
-                moves += 1;
 
-                moveLog.push({
-                  move_number: moves,
-                  ball: ballNumber,
-                  from_peg: source,
-                  to_peg: destination,
-                  elapsed_seconds: elapsedSeconds(),
-                  arrangement_after_move: JSON.stringify(pegs)
-                });
+      <div id="status" aria-live="polite">
 
-                selected = null;
-                moveCountEl.textContent = moves;
-                statusEl.textContent = "";
-                draw();
+        Select the top ball, then select a destination peg.
 
-                if (sameArrangement(pegs, goal)) {
-                  finishRound(true);
-                }
-              }
-            );
-            renderBoard(goalBoard, goal, true, null, null, null);
-          }
+      </div>
 
-          function finishRound(solved) {
+
+      <button id="finish-round" type="button">
+
+        End this round
+
+      </button>
+
+    `,
+
+    choices: [],
+
+    data: {
+      task: "tower_of_london",
+      round_id: problem.id,
+      round_number: roundIndex + 1
+    },
+
+
+    // =====================================================
+    // LOAD EACH ROUND
+    // =====================================================
+
+    on_load: function () {
+
+      let pegs = clonePegs(problem.start);
+
+      const goal = clonePegs(problem.goal);
+
+      let selected = null;
+
+      let moves = 0;
+
+      let finished = false;
+
+      const moveLog = [];
+
+      const startTime = Date.now();
+
+      let intervalId = null;
+
+
+      const startBoard =
+        document.getElementById("start-board");
+
+      const goalBoard =
+        document.getElementById("goal-board");
+
+      const statusEl =
+        document.getElementById("status");
+
+      const moveCountEl =
+        document.getElementById("move-count");
+
+      const remainingMovesEl =
+        document.getElementById("remaining-moves");
+
+      const elapsedTimeEl =
+        document.getElementById("elapsed-time");
+
+      const finishButton =
+        document.getElementById("finish-round");
+
+
+      // ===================================================
+      // TIMER
+      // ===================================================
+
+      function elapsedSeconds() {
+
+        return Math.floor(
+          (Date.now() - startTime) / 1000
+        );
+
+      }
+
+
+      function updateTime() {
+
+        if (!finished) {
+
+          elapsedTimeEl.textContent =
+            elapsedSeconds();
+
+        }
+
+      }
+
+
+      // ===================================================
+      // DRAW BOTH BOARDS
+      // ===================================================
+
+      function draw() {
+
+        renderBoard(
+
+          startBoard,
+
+          pegs,
+
+          false,
+
+          selected,
+
+
+          // SELECT BALL
+          function (pegName, ballNumber) {
+
             if (finished) return;
-            finished = true;
-            if (intervalId !== null) clearInterval(intervalId);
-            finishButton.disabled = true;
 
-            const result = {
-              task: "tower_of_london",
-              participant_id: participantId,
-              round_id: problem.id,
-              round_number: roundIndex + 1,
-              moves: moves,
-              time_seconds: elapsedSeconds(),
-              solved: solved,
-              start_state: JSON.stringify(problem.start),
-              goal_state: JSON.stringify(goal),
-              final_state: JSON.stringify(pegs),
-              move_log: JSON.stringify(moveLog)
+            selected = {
+              peg: pegName,
+              ball: ballNumber
             };
-            allRoundResults.push({
-              round_id: result.round_id,
-              moves: result.moves,
-              time_seconds: result.time_seconds,
-              solved: result.solved
+
+            statusEl.textContent =
+              "Ball selected. Now click a destination peg.";
+
+            draw();
+
+          },
+
+
+          // SELECT DESTINATION PEG
+          function (destination) {
+
+            if (finished || selected === null) return;
+
+
+            // Cancel selection if same peg is clicked
+            if (destination === selected.peg) {
+
+              selected = null;
+
+              statusEl.textContent =
+                "Selection cancelled.";
+
+              draw();
+
+              return;
+
+            }
+
+
+            // Check peg capacity
+            if (
+              pegs[destination].length >=
+              CAPACITY[destination]
+            ) {
+
+              statusEl.textContent =
+                "That peg is full. Choose a peg with free space.";
+
+              return;
+
+            }
+
+
+            const source = selected.peg;
+
+            const ballNumber =
+              pegs[source][pegs[source].length - 1];
+
+
+            if (ballNumber !== selected.ball) {
+
+              selected = null;
+
+              draw();
+
+              return;
+
+            }
+
+
+            // =============================================
+            // MAKE THE MOVE
+            // =============================================
+
+            pegs[source].pop();
+
+            pegs[destination].push(ballNumber);
+
+            moves += 1;
+
+
+            // Record move information
+            moveLog.push({
+
+              move_number: moves,
+
+              ball: ballNumber,
+
+              from_peg: source,
+
+              to_peg: destination,
+
+              elapsed_seconds: elapsedSeconds(),
+
+              arrangement_after_move:
+                JSON.stringify(pegs)
+
             });
 
-            jsPsych.finishTrial(result);
+
+            selected = null;
+
+
+            // Update move counter
+            moveCountEl.textContent = moves;
+
+
+            // Update remaining moves
+            remainingMovesEl.textContent =
+              Math.max(
+                0,
+                MAX_MOVES_PER_ROUND - moves
+              );
+
+
+            statusEl.textContent = "";
+
+            draw();
+
+
+            // =============================================
+            // FIRST: CHECK WHETHER THE GOAL IS REACHED
+            // =============================================
+
+            if (sameArrangement(pegs, goal)) {
+
+              statusEl.textContent =
+                "Correct! You completed this round.";
+
+              finishRound(true);
+
+              return;
+
+            }
+
+
+            // =============================================
+            // SECOND: CHECK MAXIMUM NUMBER OF MOVES
+            // =============================================
+
+            if (moves >= MAX_MOVES_PER_ROUND) {
+
+              statusEl.textContent =
+                "Maximum number of moves reached. Moving to the next round.";
+
+              finishRound(false);
+
+              return;
+
+            }
+
           }
 
-          finishButton.addEventListener("click", function () {
-            finishRound(false);
-          });
+        );
 
-          draw();
-          updateTime();
-          intervalId = setInterval(updateTime, 500);
+
+        // Draw goal board
+        renderBoard(
+          goalBoard,
+          goal,
+          true,
+          null,
+          null,
+          null
+        );
+
+      }
+
+
+      // ===================================================
+      // FINISH ROUND
+      // ===================================================
+
+      function finishRound(solved) {
+
+        if (finished) return;
+
+        finished = true;
+
+
+        // Stop timer
+        if (intervalId !== null) {
+
+          clearInterval(intervalId);
+
         }
+
+
+        finishButton.disabled = true;
+
+
+        // Determine why the round ended
+        let terminationReason;
+
+        if (solved) {
+
+          terminationReason = "solved";
+
+        } else if (moves >= MAX_MOVES_PER_ROUND) {
+
+          terminationReason = "maximum_moves_reached";
+
+        } else {
+
+          terminationReason = "participant_ended";
+
+        }
+
+
+        // Prepare round results
+        const result = {
+
+          task: "tower_of_london",
+
+          participant_id: participantId,
+
+          round_id: problem.id,
+
+          round_number: roundIndex + 1,
+
+          moves: moves,
+
+          max_moves_allowed: MAX_MOVES_PER_ROUND,
+
+          remaining_moves: Math.max(
+            0,
+            MAX_MOVES_PER_ROUND - moves
+          ),
+
+          time_seconds: elapsedSeconds(),
+
+          solved: solved,
+
+          termination_reason: terminationReason,
+
+          start_state: JSON.stringify(problem.start),
+
+          goal_state: JSON.stringify(goal),
+
+          final_state: JSON.stringify(pegs),
+
+          move_log: JSON.stringify(moveLog)
+
+        };
+
+
+        // Save round summary
+        allRoundResults.push({
+
+          round_id: result.round_id,
+
+          moves: result.moves,
+
+          time_seconds: result.time_seconds,
+
+          solved: result.solved,
+
+          termination_reason:
+            result.termination_reason
+
+        });
+
+
+        // End current round and automatically
+        // proceed to the next timeline trial
+        jsPsych.finishTrial(result);
+
+      }
+
+
+      // ===================================================
+      // MANUAL END ROUND BUTTON
+      // ===================================================
+
+      finishButton.addEventListener("click", function () {
+
+        finishRound(false);
+
       });
-    });
 
-    timeline.push({
-      type: jsPsychHtmlButtonResponse,
-      stimulus: `
-        <h2>Thank you!</h2>
-        <p>You have completed all rounds. Click Continue to proceed to the final questionnaire.</p>
-      `,
-      choices: ["Continue"]
-    });
 
-    jsPsych.run(timeline);
-  </script>
+      // ===================================================
+      // START ROUND
+      // ===================================================
+
+      draw();
+
+      updateTime();
+
+      intervalId = setInterval(updateTime, 500);
+
+    }
+
+  });
+
+});
+
+
+// =========================================================
+// FINAL THANK-YOU SCREEN
+// =========================================================
+
+timeline.push({
+
+  type: jsPsychHtmlButtonResponse,
+
+  stimulus: `
+
+    <h2>Thank you!</h2>
+
+    <p>
+      You have completed all rounds.
+      Click Continue to proceed to the final questionnaire.
+    </p>
+
+  `,
+
+  choices: ["Continue"]
+
+});
+
+
+// =========================================================
+// RUN EXPERIMENT
+// =========================================================
+
+jsPsych.run(timeline);
+
+</script>
+
 </body>
 </html>
 
