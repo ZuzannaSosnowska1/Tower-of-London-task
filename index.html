@@ -283,7 +283,8 @@
 
 <script>
 "use strict";
-
+const GOOGLE_SCRIPT_URL =
+  "PASTE_YOUR_DEPLOYED_WEB_APP_URL_HERE";
 // =========================================================
 // SETTINGS
 // =========================================================
@@ -584,20 +585,163 @@ psiqHTML += `
 // INITIALIZE jsPsych
 // =========================================================
 
+
 const jsPsych = initJsPsych({
 
   display_element: "experiment",
 
   on_finish: function() {
 
+    // =========================================
+    // 1. SAVE LOCAL CSV BACKUP
+    // =========================================
+
     jsPsych.data.get().localSave(
       "csv",
       "tower_of_london_and_psiq_data.csv"
     );
 
+
+    // =========================================
+    // 2. COLLECT ALL EXPERIMENT DATA
+    // =========================================
+
+    const allData = jsPsych.data.get().values();
+
+
+    // =========================================
+    // 3. GET PARTICIPANT ID
+    // =========================================
+
+    const participantTrial = allData.find(
+      trial => trial.participant_id
+    );
+
+    const participantId =
+      participantTrial?.participant_id || "";
+
+
+    if (!participantId) {
+
+      console.error("Participant ID is missing.");
+
+      return;
+
+    }
+
+
+    // =========================================
+    // 4. GET DEMOGRAPHIC INFORMATION
+    // =========================================
+
+    const demographicTrial = allData.find(
+      trial => trial.task === "demographics"
+    );
+
+    const demographics = {
+
+      age:
+        demographicTrial?.age ??
+        demographicTrial?.response?.age ?? "",
+
+      gender:
+        demographicTrial?.gender ??
+        demographicTrial?.response?.gender ?? "",
+
+      education:
+        demographicTrial?.education ??
+        demographicTrial?.response?.education ?? ""
+
+    };
+
+
+    // =========================================
+    // 5. PREPARE ALL EXPERIMENT TRIALS
+    // =========================================
+
+    const trials = allData.map((trial, index) => {
+
+      return {
+
+        ...trial,
+
+        participant_id: participantId,
+
+        trial_index:
+          trial.trial_index ?? index,
+
+        trial_type:
+          trial.trial_type || trial.type || "",
+
+        round_id:
+          trial.round_id || "",
+
+        termination_reason:
+          trial.termination_reason || ""
+
+      };
+
+    });
+
+
+    // =========================================
+    // 6. CREATE PAYLOAD FOR GOOGLE SHEETS
+    // =========================================
+
+    const payload = {
+
+      participantId: participantId,
+
+      demographics: demographics,
+
+      trials: trials
+
+    };
+
+
+    // =========================================
+    // 7. SEND DATA TO GOOGLE APPS SCRIPT
+    // =========================================
+
+    fetch(GOOGLE_SCRIPT_URL, {
+
+      method: "POST",
+
+      mode: "no-cors",
+
+      headers: {
+
+        "Content-Type": "text/plain;charset=utf-8"
+
+      },
+
+      body: JSON.stringify(payload),
+
+      keepalive: true
+
+    })
+
+    .then(() => {
+
+      console.log(
+        "Experiment data submission initiated."
+      );
+
+    })
+
+    .catch(error => {
+
+      console.error(
+        "Google Sheets submission failed:",
+        error
+      );
+
+    });
+
   }
 
 });
+
 
 const timeline = [];
 
