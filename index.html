@@ -25,6 +25,27 @@
       text-align: left;
     }
 
+    .test-notice {
+      max-width: 700px;
+      margin: 15px auto;
+      padding: 16px;
+      background: #fff3cd;
+      border: 2px solid #e0a800;
+      border-radius: 8px;
+      color: #664d03;
+      box-sizing: border-box;
+    }
+
+    .test-notice h3 {
+      margin-top: 0;
+    }
+
+    .test-notice .move-limit {
+      font-size: 22px;
+      font-weight: bold;
+      margin: 12px 0;
+    }
+
     .boards-wrap {
       display: flex;
       justify-content: center;
@@ -193,7 +214,9 @@ const CAPACITY = {
 // =========================================================
 // EXPERIMENT ROUNDS
 // =========================================================
-// TEST ROUND — runs first
+
+// TEST ROUND — RUNS FIRST
+
 const testRound = {
   id: "TOL_test",
   start: { A: [1], B: [2], C: [3] },
@@ -201,7 +224,9 @@ const testRound = {
   maxMoves: 2
 };
 
+
 // ACTUAL EXPERIMENT ROUNDS
+
 const rounds = [
   {
     id: "TOL_01",
@@ -259,7 +284,9 @@ const rounds = [
   }
 ];
 
+
 // Validate round configurations
+
 rounds.forEach(problem => {
   if (!Number.isInteger(problem.maxMoves) || problem.maxMoves < 1) {
     throw new Error("Invalid maxMoves for round: " + problem.id);
@@ -309,7 +336,7 @@ const jsPsych = initJsPsych({
     );
 
     const allSolved =
-      allRoundResults.length === rounds.length &&
+      allRoundResults.length === rounds.length + 1 &&
       allRoundResults.every(r => r.solved);
 
     const url = GOOGLE_FORM_BASE +
@@ -420,7 +447,12 @@ timeline.push({
       </ul>
 
       <p>
-        There are ${rounds.length} rounds.
+        You will first complete <strong>one test round</strong>
+        with a maximum of <strong>2 moves</strong>.
+        This is followed by <strong>${rounds.length} actual experiment rounds</strong>.
+      </p>
+
+      <p>
         Try to reach the goal carefully.
       </p>
 
@@ -581,7 +613,11 @@ function renderBoard(
 
 const allProblems = [testRound, ...rounds];
 
-allProblems.forEach((problem, roundIndex) => {  
+allProblems.forEach((problem, roundIndex) => {
+
+  const isTestRound = roundIndex === 0;
+
+  const actualRoundNumber = roundIndex;
 
   timeline.push({
 
@@ -589,7 +625,42 @@ allProblems.forEach((problem, roundIndex) => {
 
     stimulus: `
 
-      <h2>Round ${roundIndex + 1} of ${rounds.length}</h2>
+      ${
+        isTestRound
+
+          ? `
+            <h2 style="color: #9a6700;">
+              TEST ROUND – PRACTICE ONLY
+            </h2>
+
+            <div class="test-notice">
+
+              <h3>Practice Round</h3>
+
+              <p>
+                This is a test round to help you become
+                familiar with the Tower of London task.
+              </p>
+
+              <p class="move-limit">
+                Maximum moves allowed: 2
+              </p>
+
+              <p>
+                After completing this test round, you will
+                proceed to the actual experiment.
+              </p>
+
+            </div>
+          `
+
+          : `
+            <h2>
+              Experiment Round ${actualRoundNumber}
+              of ${rounds.length}
+            </h2>
+          `
+      }
 
       <div id="stats">
 
@@ -659,6 +730,8 @@ allProblems.forEach((problem, roundIndex) => {
       task: "tower_of_london",
       round_id: problem.id,
       round_number: roundIndex + 1,
+      is_test_round: isTestRound,
+      actual_experiment_round: isTestRound ? null : actualRoundNumber,
       max_moves_allowed: problem.maxMoves
     },
 
@@ -750,6 +823,7 @@ allProblems.forEach((problem, roundIndex) => {
 
 
           // SELECT BALL
+
           function (pegName, ballNumber) {
 
             if (finished) return;
@@ -768,11 +842,13 @@ allProblems.forEach((problem, roundIndex) => {
 
 
           // SELECT DESTINATION PEG
+
           function (destination) {
 
             if (finished || selected === null) return;
 
             // Cancel selection if same peg is clicked
+
             if (destination === selected.peg) {
 
               selected = null;
@@ -787,6 +863,7 @@ allProblems.forEach((problem, roundIndex) => {
             }
 
             // Check peg capacity
+
             if (
               pegs[destination].length >=
               CAPACITY[destination]
@@ -825,6 +902,7 @@ allProblems.forEach((problem, roundIndex) => {
             moves += 1;
 
             // Record move information
+
             moveLog.push({
 
               move_number: moves,
@@ -845,9 +923,11 @@ allProblems.forEach((problem, roundIndex) => {
             selected = null;
 
             // Update move counter
+
             moveCountEl.textContent = moves;
 
-            // Update remaining moves using this round's limit
+            // Update remaining moves
+
             remainingMovesEl.textContent =
               Math.max(0, problem.maxMoves - moves);
 
@@ -893,6 +973,7 @@ allProblems.forEach((problem, roundIndex) => {
 
 
         // Draw goal board
+
         renderBoard(
           goalBoard,
           goal,
@@ -916,6 +997,7 @@ allProblems.forEach((problem, roundIndex) => {
         finished = true;
 
         // Stop timer
+
         if (intervalId !== null) {
 
           clearInterval(intervalId);
@@ -925,6 +1007,7 @@ allProblems.forEach((problem, roundIndex) => {
         finishButton.disabled = true;
 
         // Determine why the round ended
+
         let terminationReason;
 
         if (solved) {
@@ -942,6 +1025,7 @@ allProblems.forEach((problem, roundIndex) => {
         }
 
         // Prepare round results
+
         const result = {
 
           task: "tower_of_london",
@@ -951,6 +1035,12 @@ allProblems.forEach((problem, roundIndex) => {
           round_id: problem.id,
 
           round_number: roundIndex + 1,
+
+          is_test_round: isTestRound,
+
+          actual_experiment_round: isTestRound
+            ? null
+            : actualRoundNumber,
 
           moves: moves,
 
@@ -978,9 +1068,12 @@ allProblems.forEach((problem, roundIndex) => {
         };
 
         // Save round summary
+
         allRoundResults.push({
 
           round_id: result.round_id,
+
+          is_test_round: result.is_test_round,
 
           moves: result.moves,
 
@@ -999,6 +1092,7 @@ allProblems.forEach((problem, roundIndex) => {
 
         // End current round and automatically
         // proceed to the next timeline trial
+
         jsPsych.finishTrial(result);
 
       }
