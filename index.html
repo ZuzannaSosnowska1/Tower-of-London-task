@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Tower of London Task</title>
+  <title>Tower of London and PSIQ Experiment</title>
 
   <!-- jsPsych 7.3.3 -->
   <script src="https://unpkg.com/jspsych@7.3.3"></script>
@@ -136,10 +136,6 @@
       opacity: 1;
     }
 
-    .goal-ball {
-      cursor: default;
-    }
-
     #status {
       min-height: 28px;
       margin: 8px auto;
@@ -166,6 +162,60 @@
       margin-top: 6px;
     }
 
+    /* PSIQ questionnaire styling */
+    .psiq-container {
+      max-width: 1000px;
+      margin: auto;
+      text-align: left;
+      padding: 10px;
+    }
+
+    .psiq-section {
+      margin: 25px 0;
+      padding: 15px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    .psiq-item {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 10px 0;
+      border-bottom: 1px solid #eee;
+    }
+
+    .psiq-item:last-child {
+      border-bottom: none;
+    }
+
+    .psiq-question {
+      flex: 1 1 220px;
+      font-size: 16px;
+    }
+
+    .psiq-scale {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      align-items: center;
+    }
+
+    .psiq-scale label {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 13px;
+      cursor: pointer;
+      min-width: 22px;
+    }
+
+    .psiq-scale input {
+      cursor: pointer;
+    }
+
     @media (max-width: 600px) {
       .boards-wrap {
         gap: 12px;
@@ -188,15 +238,24 @@
         width: 42px;
         height: 34px;
       }
+
+      .psiq-item {
+        display: block;
+      }
+
+      .psiq-scale {
+        margin-top: 10px;
+        justify-content: space-between;
+      }
     }
   </style>
 </head>
 
 <body>
-
-<div id="experiment"></div>
+  <div id="experiment"></div>
 
 <script>
+"use strict";
 
 // =========================================================
 // SETTINGS
@@ -210,9 +269,18 @@ const CAPACITY = {
   C: 1
 };
 
+const BALL_COLORS = {
+  1: "#FFFB00",
+  2: "#0084FF",
+  3: "#FF0000"
+};
+
+let participantId = "";
+let psiqResponses = {};
+
 
 // =========================================================
-// EXPERIMENT ROUNDS
+// TOWER OF LONDON ROUNDS
 // =========================================================
 
 // TEST ROUND — RUNS FIRST
@@ -225,7 +293,7 @@ const testRound = {
 };
 
 
-// ACTUAL EXPERIMENT ROUNDS
+// NINE ACTUAL EXPERIMENT ROUNDS
 
 const rounds = [
   {
@@ -285,9 +353,9 @@ const rounds = [
 ];
 
 
-// --------------------------------------------------
-// PSIQ: Plymouth Sensory Imagery Questionnaire
-// --------------------------------------------------
+// =========================================================
+// PSIQ: PLYMOUTH SENSORY IMAGERY QUESTIONNAIRE
+// =========================================================
 
 const psiqSections = [
   {
@@ -369,12 +437,11 @@ const psiqSections = [
   }
 ];
 
-// Store questionnaire responses
-let psiqResponses = {};
 
-// Build questionnaire HTML
+// Build the PSIQ questionnaire HTML
+
 let psiqHTML = `
-  <div style="max-width: 1000px; margin: auto; text-align: left;">
+  <div class="psiq-container">
     <h2 style="text-align: center;">
       Psi-Q: The Plymouth Sensory Imagery Questionnaire
     </h2>
@@ -389,71 +456,10 @@ let psiqHTML = `
     </p>
 
     <p>
-      Tick the appropriate box for each item.
-      Please rate every item.
+      Select one number for every item. Please answer all items.
     </p>
-
-    <style>
-      .psiq-section {
-        margin: 25px 0;
-        padding: 15px;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-      }
-
-      .psiq-item {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        justify-content: space-between;
-        gap: 8px;
-        padding: 10px 0;
-        border-bottom: 1px solid #eee;
-      }
-
-      .psiq-item:last-child {
-        border-bottom: none;
-      }
-
-      .psiq-question {
-        flex: 1 1 220px;
-        font-size: 16px;
-      }
-
-      .psiq-scale {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 7px;
-        align-items: center;
-      }
-
-      .psiq-scale label {
-        display: inline-flex;
-        flex-direction: column;
-        align-items: center;
-        font-size: 13px;
-        cursor: pointer;
-        min-width: 22px;
-      }
-
-      .psiq-scale input {
-        cursor: pointer;
-      }
-
-      @media (max-width: 600px) {
-        .psiq-item {
-          display: block;
-        }
-
-        .psiq-scale {
-          margin-top: 10px;
-          justify-content: space-between;
-        }
-      }
-    </style>
 `;
 
-// Create the seven questionnaire sections
 psiqSections.forEach(section => {
   psiqHTML += `
     <div class="psiq-section">
@@ -477,7 +483,6 @@ psiqSections.forEach(section => {
             type="radio"
             name="${questionName}"
             value="${score}"
-            required
           >
         </label>
       `;
@@ -499,7 +504,9 @@ psiqHTML += `
   </div>
 `;
 
-// Questionnaire trial
+
+// PSIQ trial
+
 const psiqTrial = {
   type: jsPsychHtmlButtonResponse,
   stimulus: psiqHTML,
@@ -510,155 +517,99 @@ const psiqTrial = {
       "#jspsych-html-button-response-btngroup button"
     );
 
-    if (submitButton) {
-      submitButton.addEventListener("click", function(event) {
-        const unanswered = [];
+    if (!submitButton) {
+      console.error("PSIQ submit button could not be found.");
+      return;
+    }
 
-        psiqSections.forEach(section => {
-          section.items.forEach((item, index) => {
-            const questionName = `${section.name}_${index + 1}`;
+    // Validate all 35 responses before jsPsych submits the trial.
+    submitButton.addEventListener("click", function(event) {
+      const unanswered = [];
 
-            const selected = document.querySelector(
-              `input[name="${questionName}"]:checked`
-            );
+      psiqSections.forEach(section => {
+        section.items.forEach((item, index) => {
+          const questionName = `${section.name}_${index + 1}`;
 
-            if (!selected) {
-              unanswered.push(questionName);
-            }
-          });
-        });
-
-        if (unanswered.length > 0) {
-          event.preventDefault();
-          event.stopImmediatePropagation();
-
-          alert(
-            "Please answer every question before submitting."
+          const selected = document.querySelector(
+            `input[name="${questionName}"]:checked`
           );
 
-          return;
-        }
-
-        // Collect all answers
-        psiqResponses = {};
-
-        psiqSections.forEach(section => {
-          section.items.forEach((item, index) => {
-            const questionName = `${section.name}_${index + 1}`;
-
-            const selected = document.querySelector(
-              `input[name="${questionName}"]:checked`
-            );
-
-            psiqResponses[questionName] = Number(selected.value);
-          });
+          if (!selected) {
+            unanswered.push(questionName);
+          }
         });
+      });
 
-      }, true);
-    }
+      if (unanswered.length > 0) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+
+        alert("Please answer every question before submitting.");
+        return;
+      }
+
+      // Collect all 35 answers.
+      psiqResponses = {};
+
+      psiqSections.forEach(section => {
+        section.items.forEach((item, index) => {
+          const questionName = `${section.name}_${index + 1}`;
+
+          const selected = document.querySelector(
+            `input[name="${questionName}"]:checked`
+          );
+
+          psiqResponses[questionName] = Number(selected.value);
+        });
+      });
+    }, true);
   },
 
   on_finish: function(data) {
     data.task = "PSIQ";
+    data.participant_id = participantId;
     data.psiq_responses = psiqResponses;
 
-    // Store each response as a separate data column
+    // Store each response as a separate CSV data column.
     Object.assign(data, psiqResponses);
 
-    // Calculate mean score for each section
+    // Calculate the mean score for each subscale.
     psiqSections.forEach(section => {
       const values = section.items.map((item, index) => {
         return psiqResponses[`${section.name}_${index + 1}`];
       });
 
-      const mean =
-        values.reduce((sum, value) => sum + value, 0) / values.length;
+      const mean = values.length
+        ? values.reduce((sum, value) => sum + value, 0) / values.length
+        : null;
 
       data[`${section.name}_mean`] = mean;
     });
 
-    // Calculate overall mean
+    // Calculate the overall mean across all 35 items.
     const allScores = Object.values(psiqResponses);
 
-    data.psiq_overall_mean =
-      allScores.reduce((sum, value) => sum + value, 0) /
-      allScores.length;
+    data.psiq_overall_mean = allScores.length === 35
+      ? allScores.reduce((sum, value) => sum + value, 0) / allScores.length
+      : null;
   }
 };
 
-// Add questionnaire to the experiment timeline
-timeline.push(psiqTrial);
-  
-
-// Validate round configurations
-
-rounds.forEach(problem => {
-  if (!Number.isInteger(problem.maxMoves) || problem.maxMoves < 1) {
-    throw new Error("Invalid maxMoves for round: " + problem.id);
-  }
-});
-
 
 // =========================================================
-// BALL COLORS
+// INITIALIZE jsPsych AND EXPERIMENT TIMELINE
 // =========================================================
 
-const BALL_COLORS = {
-  1: "#FFFB00",
-  2: "#0084FF",
-  3: "#FF0000"
-};
-
-
-// =========================================================
-// GOOGLE FORM
-// =========================================================
-
-const GOOGLE_FORM_BASE =
-  "https://docs.google.com/forms/d/e/1FAIpQLSe2xc_3B20WsNyfke8pMoPjkC4HukajEcNG3HWK6LL_wsBx3Q/viewform?usp=pp_url";
-
-let participantId = "";
-
-const allRoundResults = [];
-
-
-// =========================================================
-// INITIALIZE jsPsych
-// =========================================================
-
-
-function() {
- 
 const jsPsych = initJsPsych({
-
   display_element: "experiment",
 
   on_finish: function() {
+    // Download all trial data as a CSV file when the experiment ends.
     jsPsych.data.get().localSave(
       "csv",
       "tower_of_london_and_psiq_data.csv"
     );
   }
-});
-
-    const totalTime = allRoundResults.reduce(
-      (sum, r) => sum + r.time_seconds, 0
-    );
-
-    const allSolved =
-      allRoundResults.length === rounds.length + 1 &&
-      allRoundResults.every(r => r.solved);
-
-    const url = GOOGLE_FORM_BASE +
-      "&entry.146328682=" + encodeURIComponent(participantId) +
-      "&entry.558532723=" + encodeURIComponent(totalMoves) +
-      "&entry.1869517534=" + encodeURIComponent(totalTime) +
-      "&entry.1053943810=" + encodeURIComponent(allSolved);
-
-    window.location.href = url;
-
-  }
-
 });
 
 const timeline = [];
@@ -669,7 +620,6 @@ const timeline = [];
 // =========================================================
 
 timeline.push({
-
   type: jsPsychSurveyText,
 
   questions: [
@@ -682,16 +632,15 @@ timeline.push({
 
   button_label: "Continue",
 
-  on_finish: function (data) {
-
+  on_finish: function(data) {
     const response = data.response || {};
 
     participantId = String(
       response.participant_id || ""
     ).trim();
 
+    data.participant_id = participantId;
   }
-
 });
 
 
@@ -700,60 +649,45 @@ timeline.push({
 // =========================================================
 
 timeline.push({
-
   type: jsPsychHtmlButtonResponse,
 
   stimulus: `
-
     <div class="instructions">
-
       <h2>Tower of London task</h2>
 
       <p>
         In each round, you will see a starting arrangement
-        and a goal arrangement.
-        Your task is to make the arrangement on the left
-        match the goal on the right.
+        and a goal arrangement. Your task is to make the
+        arrangement on the left match the goal on the right.
       </p>
 
       <ul>
-
         <li>Click the top ball on a peg to select it.</li>
-
         <li>Then click the peg where you want to place that ball.</li>
-
         <li>You can move only one ball at a time.</li>
-
         <li>A ball can be placed on top of any other ball.</li>
-
         <li>
           Pegs have different capacities:
           A holds up to 3 balls, B up to 2, and C up to 1.
         </li>
-
         <li>A peg cannot hold more balls than its capacity.</li>
-
         <li>
           If you click the selected ball's peg again,
           the selection is cancelled.
         </li>
-
         <li>
           Each round has its own maximum number of moves.
           The maximum is displayed at the top of the screen.
         </li>
-
         <li>
-          If you reach the maximum number of moves
-          without solving the problem, you will automatically
-          proceed to the next round.
+          If you reach the maximum number of moves without
+          solving the problem, you will automatically proceed
+          to the next round.
         </li>
-
         <li>
           When the left board matches the goal board,
           the round ends automatically.
         </li>
-
       </ul>
 
       <p>
@@ -762,16 +696,11 @@ timeline.push({
         This is followed by <strong>${rounds.length} actual experiment rounds</strong>.
       </p>
 
-      <p>
-        Try to reach the goal carefully.
-      </p>
-
+      <p>Try to reach the goal carefully.</p>
     </div>
-
   `,
 
   choices: ["Start"]
-
 });
 
 
@@ -780,31 +709,24 @@ timeline.push({
 // =========================================================
 
 function clonePegs(pegs) {
-
   return {
     A: [...pegs.A],
     B: [...pegs.B],
     C: [...pegs.C]
   };
-
 }
 
 
 function sameArrangement(a, b) {
-
   return PEGS.every(peg =>
-
     a[peg].length === b[peg].length &&
-
-    a[peg].every((ball, i) => ball === b[peg][i])
-
+    a[peg].every((ball, index) => ball === b[peg][index])
   );
-
 }
 
 
 // =========================================================
-// DRAW BOARD
+// DRAW THE BOARD
 // =========================================================
 
 function renderBoard(
@@ -815,136 +737,98 @@ function renderBoard(
   onSelectBall,
   onSelectPeg
 ) {
-
   boardElement.innerHTML = "";
 
   PEGS.forEach(pegName => {
-
     const pegEl = document.createElement("div");
-
     pegEl.className = "peg";
-
     pegEl.dataset.peg = pegName;
 
     const rod = document.createElement("div");
-
     rod.className = "rod";
-
-    rod.style.height =
-      (CAPACITY[pegName] * 48 + 16) + "px";
-
+    rod.style.height = (CAPACITY[pegName] * 48 + 16) + "px";
     pegEl.appendChild(rod);
 
     pegState[pegName].forEach((ballNumber, index) => {
-
       const ball = document.createElement("button");
 
       ball.type = "button";
-
       ball.className = "ball" + (
-
         !isGoal &&
         selected &&
         selected.peg === pegName &&
         selected.ball === ballNumber
-
           ? " selected"
           : ""
-
       );
 
       ball.textContent = ballNumber;
-
-      ball.style.backgroundColor =
-        BALL_COLORS[ballNumber];
-
-      ball.style.bottom =
-        (index * 42 + 3) + "px";
+      ball.style.backgroundColor = BALL_COLORS[ballNumber];
+      ball.style.bottom = (index * 42 + 3) + "px";
 
       ball.setAttribute(
         "aria-label",
         "Ball " + ballNumber + " on peg " + pegName
       );
 
-      const isTop =
-        index === pegState[pegName].length - 1;
+      const isTop = index === pegState[pegName].length - 1;
 
       if (isGoal || !isTop) {
-
         ball.disabled = true;
-
       } else {
-
-        ball.addEventListener("click", event => {
-
+        ball.addEventListener("click", function(event) {
           event.stopPropagation();
-
           onSelectBall(pegName, ballNumber);
-
         });
-
       }
 
       pegEl.appendChild(ball);
-
     });
 
     const label = document.createElement("div");
-
     label.className = "peg-label";
-
-    label.textContent =
-      pegName + " (max " + CAPACITY[pegName] + ")";
-
+    label.textContent = pegName + " (max " + CAPACITY[pegName] + ")";
     pegEl.appendChild(label);
 
     if (!isGoal) {
-
-      pegEl.addEventListener("click", () => {
-
+      pegEl.addEventListener("click", function() {
         onSelectPeg(pegName);
-
       });
 
       pegEl.style.cursor = "pointer";
-
     }
 
     boardElement.appendChild(pegEl);
-
   });
-
 }
 
 
 // =========================================================
-// EXPERIMENT ROUNDS
+// CREATE THE TEST ROUND AND NINE ACTUAL ROUNDS
 // =========================================================
 
 const allProblems = [testRound, ...rounds];
 
 allProblems.forEach((problem, roundIndex) => {
-
   const isTestRound = roundIndex === 0;
-
   const actualRoundNumber = roundIndex;
 
-  timeline.push({
+  if (!Number.isInteger(problem.maxMoves) || problem.maxMoves < 1) {
+    throw new Error("Invalid maxMoves for round: " + problem.id);
+  }
 
+  timeline.push({
     type: jsPsychHtmlButtonResponse,
 
     stimulus: `
-
       ${
         isTestRound
-
           ? `
             <h2 style="color: #9a6700;">
               TEST ROUND – PRACTICE ONLY
             </h2>
 
             <div class="test-notice">
-
               <h3>Practice Round</h3>
 
               <p>
@@ -960,10 +844,8 @@ allProblems.forEach((problem, roundIndex) => {
                 After completing this test round, you will
                 proceed to the actual experiment.
               </p>
-
             </div>
           `
-
           : `
             <h2>
               Experiment Round ${actualRoundNumber}
@@ -973,7 +855,6 @@ allProblems.forEach((problem, roundIndex) => {
       }
 
       <div id="stats">
-
         Moves:
         <span id="move-count">0</span>
 
@@ -991,47 +872,33 @@ allProblems.forEach((problem, roundIndex) => {
 
         Time:
         <span id="elapsed-time">0</span> seconds
-
       </div>
 
       <div class="boards-wrap">
-
         <div class="board-panel">
-
           <h3>Your arrangement</h3>
-
           <div id="start-board" class="board"></div>
-
           <div class="capacity-note">
             Move the balls on this board.
           </div>
-
         </div>
 
         <div class="board-panel">
-
           <h3>Goal arrangement</h3>
-
           <div id="goal-board" class="board"></div>
-
           <div class="capacity-note">
             Match this arrangement exactly.
           </div>
-
         </div>
-
       </div>
 
       <div id="status" aria-live="polite">
-
         Select the top ball, then select a destination peg.
-
       </div>
 
       <button id="finish-round" type="button">
         End this round
       </button>
-
     `,
 
     choices: [],
@@ -1045,97 +912,57 @@ allProblems.forEach((problem, roundIndex) => {
       max_moves_allowed: problem.maxMoves
     },
 
-
     // =====================================================
     // LOAD EACH ROUND
     // =====================================================
 
-    on_load: function () {
-
+    on_load: function() {
       let pegs = clonePegs(problem.start);
-
       const goal = clonePegs(problem.goal);
 
       let selected = null;
-
       let moves = 0;
-
       let finished = false;
 
       const moveLog = [];
-
       const startTime = Date.now();
 
       let intervalId = null;
 
-      const startBoard =
-        document.getElementById("start-board");
-
-      const goalBoard =
-        document.getElementById("goal-board");
-
-      const statusEl =
-        document.getElementById("status");
-
-      const moveCountEl =
-        document.getElementById("move-count");
-
-      const remainingMovesEl =
-        document.getElementById("remaining-moves");
-
-      const elapsedTimeEl =
-        document.getElementById("elapsed-time");
-
-      const finishButton =
-        document.getElementById("finish-round");
+      const startBoard = document.getElementById("start-board");
+      const goalBoard = document.getElementById("goal-board");
+      const statusEl = document.getElementById("status");
+      const moveCountEl = document.getElementById("move-count");
+      const remainingMovesEl = document.getElementById("remaining-moves");
+      const elapsedTimeEl = document.getElementById("elapsed-time");
+      const finishButton = document.getElementById("finish-round");
 
 
-      // ===================================================
       // TIMER
-      // ===================================================
 
       function elapsedSeconds() {
-
-        return Math.floor(
-          (Date.now() - startTime) / 1000
-        );
-
+        return Math.floor((Date.now() - startTime) / 1000);
       }
-
 
       function updateTime() {
-
         if (!finished) {
-
-          elapsedTimeEl.textContent =
-            elapsedSeconds();
-
+          elapsedTimeEl.textContent = elapsedSeconds();
         }
-
       }
 
 
-      // ===================================================
       // DRAW BOTH BOARDS
-      // ===================================================
 
       function draw() {
-
         renderBoard(
-
           startBoard,
-
           pegs,
-
           false,
-
           selected,
 
+          // SELECT A BALL
 
-          // SELECT BALL
-
-          function (pegName, ballNumber) {
-
+          function(pegName, ballNumber) {
             if (finished) return;
 
             selected = {
@@ -1147,97 +974,59 @@ allProblems.forEach((problem, roundIndex) => {
               "Ball selected. Now click a destination peg.";
 
             draw();
-
           },
 
+          // SELECT A DESTINATION PEG
 
-          // SELECT DESTINATION PEG
-
-          function (destination) {
-
+          function(destination) {
             if (finished || selected === null) return;
 
-            // Cancel selection if same peg is clicked
+            // Cancel selection if the same peg is clicked.
 
             if (destination === selected.peg) {
-
               selected = null;
-
-              statusEl.textContent =
-                "Selection cancelled.";
-
+              statusEl.textContent = "Selection cancelled.";
               draw();
-
               return;
-
             }
 
-            // Check peg capacity
+            // Check peg capacity.
 
-            if (
-              pegs[destination].length >=
-              CAPACITY[destination]
-            ) {
-
+            if (pegs[destination].length >= CAPACITY[destination]) {
               statusEl.textContent =
                 "That peg is full. Choose a peg with free space.";
-
               return;
-
             }
 
             const source = selected.peg;
-
-            const ballNumber =
-              pegs[source][pegs[source].length - 1];
+            const ballNumber = pegs[source][pegs[source].length - 1];
 
             if (ballNumber !== selected.ball) {
-
               selected = null;
-
               draw();
-
               return;
-
             }
 
-            // =============================================
             // MAKE THE MOVE
-            // =============================================
 
             pegs[source].pop();
-
             pegs[destination].push(ballNumber);
-
             moves += 1;
 
-            // Record move information
+            // Record move information.
 
             moveLog.push({
-
               move_number: moves,
-
               ball: ballNumber,
-
               from_peg: source,
-
               to_peg: destination,
-
               elapsed_seconds: elapsedSeconds(),
-
-              arrangement_after_move:
-                JSON.stringify(pegs)
-
+              arrangement_after_move: JSON.stringify(pegs)
             });
 
             selected = null;
 
-            // Update move counter
-
             moveCountEl.textContent = moves;
-
-            // Update remaining moves
-
             remainingMovesEl.textContent =
               Math.max(0, problem.maxMoves - moves);
 
@@ -1246,43 +1035,31 @@ allProblems.forEach((problem, roundIndex) => {
             draw();
 
 
-            // =============================================
-            // FIRST: CHECK WHETHER THE GOAL IS REACHED
-            // =============================================
+            // CHECK WHETHER THE GOAL HAS BEEN REACHED.
 
             if (sameArrangement(pegs, goal)) {
-
               statusEl.textContent =
                 "Correct! You completed this round.";
 
               finishRound(true);
-
               return;
-
             }
 
 
-            // =============================================
-            // SECOND: CHECK THIS ROUND'S MOVE LIMIT
-            // =============================================
+            // CHECK THE ROUND'S MOVE LIMIT.
 
             if (moves >= problem.maxMoves) {
-
               statusEl.textContent =
                 "Maximum number of moves reached. Moving to the next round.";
 
               finishRound(false);
-
               return;
-
             }
-
           }
-
         );
 
 
-        // Draw goal board
+        // Draw the goal board.
 
         renderBoard(
           goalBoard,
@@ -1292,60 +1069,39 @@ allProblems.forEach((problem, roundIndex) => {
           null,
           null
         );
-
       }
 
 
-      // ===================================================
       // FINISH ROUND
-      // ===================================================
 
       function finishRound(solved) {
-
         if (finished) return;
 
         finished = true;
 
-        // Stop timer
-
         if (intervalId !== null) {
-
           clearInterval(intervalId);
-
         }
 
         finishButton.disabled = true;
 
-        // Determine why the round ended
-
         let terminationReason;
 
         if (solved) {
-
           terminationReason = "solved";
-
         } else if (moves >= problem.maxMoves) {
-
           terminationReason = "maximum_moves_reached";
-
         } else {
-
           terminationReason = "participant_ended";
-
         }
 
-        // Prepare round results
+        // Prepare round results.
 
         const result = {
-
           task: "tower_of_london",
-
           participant_id: participantId,
-
           round_id: problem.id,
-
           round_number: roundIndex + 1,
-
           is_test_round: isTestRound,
 
           actual_experiment_round: isTestRound
@@ -1353,87 +1109,47 @@ allProblems.forEach((problem, roundIndex) => {
             : actualRoundNumber,
 
           moves: moves,
-
           max_moves_allowed: problem.maxMoves,
-
-          remaining_moves: Math.max(
-            0,
-            problem.maxMoves - moves
-          ),
-
+          remaining_moves: Math.max(0, problem.maxMoves - moves),
           time_seconds: elapsedSeconds(),
-
           solved: solved,
-
           termination_reason: terminationReason,
 
           start_state: JSON.stringify(problem.start),
-
           goal_state: JSON.stringify(goal),
-
           final_state: JSON.stringify(pegs),
-
           move_log: JSON.stringify(moveLog)
-
         };
 
-        // Save round summary
-
-        allRoundResults.push({
-
-          round_id: result.round_id,
-
-          is_test_round: result.is_test_round,
-
-          moves: result.moves,
-
-          max_moves_allowed: result.max_moves_allowed,
-
-          remaining_moves: result.remaining_moves,
-
-          time_seconds: result.time_seconds,
-
-          solved: result.solved,
-
-          termination_reason:
-            result.termination_reason
-
-        });
-
-        // End current round and automatically
-        // proceed to the next timeline trial
+        // End the current round and proceed to the next timeline trial.
 
         jsPsych.finishTrial(result);
-
       }
 
 
-      // ===================================================
       // MANUAL END ROUND BUTTON
-      // ===================================================
 
-      finishButton.addEventListener("click", function () {
-
+      finishButton.addEventListener("click", function() {
         finishRound(false);
-
       });
 
 
-      // ===================================================
       // START ROUND
-      // ===================================================
 
       draw();
-
       updateTime();
 
       intervalId = setInterval(updateTime, 500);
-
     }
-
   });
-
 });
+
+
+// =========================================================
+// ADD PSIQ AFTER ALL TOWER OF LONDON ROUNDS
+// =========================================================
+
+timeline.push(psiqTrial);
 
 
 // =========================================================
@@ -1441,32 +1157,31 @@ allProblems.forEach((problem, roundIndex) => {
 // =========================================================
 
 timeline.push({
-
   type: jsPsychHtmlButtonResponse,
 
   stimulus: `
-
     <h2>Thank you!</h2>
 
     <p>
-      You have completed all rounds.
-      Click Continue to proceed to the final questionnaire.
+      You have completed the Tower of London task
+      and the questionnaire.
     </p>
 
+    <p>
+      Click Finish to complete the experiment.
+    </p>
   `,
 
-  choices: ["Continue"]
-
+  choices: ["Finish"]
 });
 
 
 // =========================================================
-// RUN EXPERIMENT
+// RUN THE EXPERIMENT
 // =========================================================
 
 jsPsych.run(timeline);
 
 </script>
-
 </body>
 </html>
