@@ -760,6 +760,10 @@ timeline.push({
       <h2>Demographic Questionnaire</h2>
 
       <p>
+       Hello!
+      I'm a Cognitive Science student at Nicolaus Copernicus Univeristy in Toruń conducting research study on problem-solving
+      I would like to invite you to take part in this study.
+      Participation is voluntary and anonymous.
         Please provide the following demographic information.
       </p>
 
@@ -769,6 +773,106 @@ timeline.push({
 
   questions: [
 
+     <!-- Question 1 -->
+    <p><strong>1. Do you agree to participate in this study?</strong></p>
+
+    <label>
+        <input type="radio" name="consent" value="Yes" required>
+        Yes
+    </label><br>
+
+    <label>
+        <input type="radio" name="consent" value="No">
+        No
+    </label><br><br>
+
+
+    <!-- Question 2 -->
+    <p><strong>2. What is your age?</strong></p>
+
+    <label>
+        <input type="radio" name="age" value="18-24" required>
+        18–24 years
+    </label><br>
+
+    <label>
+        <input type="radio" name="age" value="25-34">
+        25–34 years
+    </label><br>
+
+    <label>
+        <input type="radio" name="age" value="35-44">
+        35–44 years
+    </label><br>
+
+    <label>
+        <input type="radio" name="age" value="45-54">
+        45–54 years
+    </label><br>
+
+    <label>
+        <input type="radio" name="age" value="55+">
+        55 years or above
+    </label><br><br>
+
+
+    <!-- Question 3 -->
+    <p><strong>3. What is your gender?</strong></p>
+
+    <label>
+        <input type="radio" name="gender" value="Female" required>
+        Female
+    </label><br>
+
+    <label>
+        <input type="radio" name="gender" value="Male">
+        Male
+    </label><br>
+
+    <label>
+        <input type="radio" name="gender" value="Non-binary">
+        Non-binary
+    </label><br>
+
+    <label>
+        <input type="radio" name="gender" value="Other">
+        Other
+    </label><br>
+
+    <label>
+        <input type="radio" name="gender" value="Prefer not to say">
+        Prefer not to say
+    </label><br><br>
+
+
+    <!-- Question 4 -->
+    <p><strong>4. What is your highest completed educational level?</strong></p>
+
+    <label>
+        <input type="radio" name="education" value="High school" required>
+        High school
+    </label><br>
+
+    <label>
+        <input type="radio" name="education" value="Undergraduate">
+        Undergraduate degree
+    </label><br>
+
+    <label>
+        <input type="radio" name="education" value="Graduate">
+        Graduate degree (Master's)
+    </label><br>
+
+    <label>
+        <input type="radio" name="education" value="Doctoral or professional degree">
+        Doctoral or professional degree (e.g., PhD, MD, JD)
+    </label><br>
+
+    <label>
+        <input type="radio" name="education" value="Other">
+        Other
+
+    
     {
       prompt: "Age (in years):",
       name: "age",
