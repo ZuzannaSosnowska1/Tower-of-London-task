@@ -178,10 +178,9 @@
 <script>
 
 // =========================================================
-// SETTINGS YOU CAN CHANGE
+// SETTINGS
 // =========================================================
 
-// Peg capacities
 const PEGS = ["A", "B", "C"];
 
 const CAPACITY = {
@@ -189,10 +188,6 @@ const CAPACITY = {
   B: 2,
   C: 1
 };
-
-// Maximum number of moves allowed PER ROUND
-// Change 10 to any number you want.
-const MAX_MOVES_PER_ROUND = 10;
 
 
 // =========================================================
@@ -204,84 +199,82 @@ const rounds = [
   {
     id: "TOL_test",
     start: { A: [1], B: [2], C: [3] },
-    goal:  { A: [1, 2, 3], B: [], C: [] }
+    goal: { A: [1, 2, 3], B: [], C: [] },
     maxMoves: 2
-  }
-  ,
+  },
 
   {
     id: "TOL_01",
     start: { A: [3, 1], B: [2], C: [] },
-    goal:  { A: [2], B: [1, 3], C: [] }
+    goal: { A: [2], B: [1, 3], C: [] },
     maxMoves: 4
-  }
-  ,
+  },
 
   {
     id: "TOL_02",
     start: { A: [], B: [3, 2], C: [1] },
-    goal:  { A: [3], B: [1], C: [2] }
+    goal: { A: [3], B: [1], C: [2] },
     maxMoves: 4
-  }
-  ,
+  },
 
   {
     id: "TOL_03",
     start: { A: [1], B: [2, 3], C: [] },
-    goal:  { A: [3, 2, 1], B: [], C: [] }
+    goal: { A: [3, 2, 1], B: [], C: [] },
     maxMoves: 4
-  }
-  ,
+  },
 
   {
     id: "TOL_04",
     start: { A: [3, 2], B: [1], C: [] },
-    goal:  { A: [2, 1, 3], B: [], C: [] }
+    goal: { A: [2, 1, 3], B: [], C: [] },
     maxMoves: 5
-  }
-  ,
+  },
 
   {
     id: "TOL_05",
     start: { A: [2, 3], B: [1], C: [] },
-    goal:  { A: [1, 3], B: [], C: [2] }
+    goal: { A: [1, 3], B: [], C: [2] },
     maxMoves: 5
-  }
-  ,
+  },
 
   {
     id: "TOL_06",
     start: { A: [3, 2], B: [], C: [1] },
-    goal:  { A: [2, 1, 3], B: [], C: [] }
+    goal: { A: [2, 1, 3], B: [], C: [] },
     maxMoves: 5
-  }
-  ,
+  },
 
   {
     id: "TOL_07",
     start: { A: [2, 3], B: [1], C: [] },
-    goal:  { A: [1, 2, 3], B: [], C: [] }
+    goal: { A: [1, 2, 3], B: [], C: [] },
     maxMoves: 6
-  }
-  ,
+  },
 
   {
     id: "TOL_08",
     start: { A: [3, 1], B: [2], C: [] },
-    goal:  { A: [1, 2], B: [3], C: [] }
+    goal: { A: [1, 2], B: [3], C: [] },
     maxMoves: 6
- 
-  }
-  ,
+  },
 
   {
     id: "TOL_09",
     start: { A: [1], B: [3], C: [2] },
-    goal:  { A: [2], B: [1], C: [3] }
-    maxMoves: 6 
+    goal: { A: [2], B: [1], C: [3] },
+    maxMoves: 6
   }
 
 ];
+
+
+// Validate round configurations
+rounds.forEach(problem => {
+  if (!Number.isInteger(problem.maxMoves) || problem.maxMoves < 1) {
+    throw new Error("Invalid maxMoves for round: " + problem.id);
+  }
+});
 
 
 // =========================================================
@@ -301,7 +294,6 @@ const BALL_COLORS = {
 
 const GOOGLE_FORM_BASE =
   "https://docs.google.com/forms/d/e/1FAIpQLSe2xc_3B20WsNyfke8pMoPjkC4HukajEcNG3HWK6LL_wsBx3Q/viewform?usp=pp_url";
-
 
 let participantId = "";
 
@@ -341,7 +333,6 @@ const jsPsych = initJsPsych({
   }
 
 });
-
 
 const timeline = [];
 
@@ -421,8 +412,8 @@ timeline.push({
         </li>
 
         <li>
-          Each round has a maximum of
-          <strong>${MAX_MOVES_PER_ROUND} moves</strong>.
+          Each round has its own maximum number of moves.
+          The maximum is displayed at the top of the screen.
         </li>
 
         <li>
@@ -503,7 +494,6 @@ function renderBoard(
 
     pegEl.dataset.peg = pegName;
 
-
     const rod = document.createElement("div");
 
     rod.className = "rod";
@@ -512,7 +502,6 @@ function renderBoard(
       (CAPACITY[pegName] * 48 + 16) + "px";
 
     pegEl.appendChild(rod);
-
 
     pegState[pegName].forEach((ballNumber, index) => {
 
@@ -545,10 +534,8 @@ function renderBoard(
         "Ball " + ballNumber + " on peg " + pegName
       );
 
-
       const isTop =
         index === pegState[pegName].length - 1;
-
 
       if (isGoal || !isTop) {
 
@@ -570,7 +557,6 @@ function renderBoard(
 
     });
 
-
     const label = document.createElement("div");
 
     label.className = "peg-label";
@@ -579,7 +565,6 @@ function renderBoard(
       pegName + " (max " + CAPACITY[pegName] + ")";
 
     pegEl.appendChild(label);
-
 
     if (!isGoal) {
 
@@ -622,14 +607,12 @@ rounds.forEach((problem, roundIndex) => {
         &nbsp; | &nbsp;
 
         Maximum moves:
-        ${MAX_MOVES_PER_ROUND}
+        ${problem.maxMoves}
 
         &nbsp; | &nbsp;
 
         Remaining:
-        <span id="remaining-moves">
-          ${MAX_MOVES_PER_ROUND}
-        </span>
+        <span id="remaining-moves">${problem.maxMoves}</span>
 
         &nbsp; | &nbsp;
 
@@ -637,7 +620,6 @@ rounds.forEach((problem, roundIndex) => {
         <span id="elapsed-time">0</span> seconds
 
       </div>
-
 
       <div class="boards-wrap">
 
@@ -653,7 +635,6 @@ rounds.forEach((problem, roundIndex) => {
 
         </div>
 
-
         <div class="board-panel">
 
           <h3>Goal arrangement</h3>
@@ -668,18 +649,14 @@ rounds.forEach((problem, roundIndex) => {
 
       </div>
 
-
       <div id="status" aria-live="polite">
 
         Select the top ball, then select a destination peg.
 
       </div>
 
-
       <button id="finish-round" type="button">
-
         End this round
-
       </button>
 
     `,
@@ -689,7 +666,8 @@ rounds.forEach((problem, roundIndex) => {
     data: {
       task: "tower_of_london",
       round_id: problem.id,
-      round_number: roundIndex + 1
+      round_number: roundIndex + 1,
+      max_moves_allowed: problem.maxMoves
     },
 
 
@@ -714,7 +692,6 @@ rounds.forEach((problem, roundIndex) => {
       const startTime = Date.now();
 
       let intervalId = null;
-
 
       const startBoard =
         document.getElementById("start-board");
@@ -803,7 +780,6 @@ rounds.forEach((problem, roundIndex) => {
 
             if (finished || selected === null) return;
 
-
             // Cancel selection if same peg is clicked
             if (destination === selected.peg) {
 
@@ -818,7 +794,6 @@ rounds.forEach((problem, roundIndex) => {
 
             }
 
-
             // Check peg capacity
             if (
               pegs[destination].length >=
@@ -832,12 +807,10 @@ rounds.forEach((problem, roundIndex) => {
 
             }
 
-
             const source = selected.peg;
 
             const ballNumber =
               pegs[source][pegs[source].length - 1];
-
 
             if (ballNumber !== selected.ball) {
 
@@ -849,7 +822,6 @@ rounds.forEach((problem, roundIndex) => {
 
             }
 
-
             // =============================================
             // MAKE THE MOVE
             // =============================================
@@ -859,7 +831,6 @@ rounds.forEach((problem, roundIndex) => {
             pegs[destination].push(ballNumber);
 
             moves += 1;
-
 
             // Record move information
             moveLog.push({
@@ -879,21 +850,14 @@ rounds.forEach((problem, roundIndex) => {
 
             });
 
-
             selected = null;
-
 
             // Update move counter
             moveCountEl.textContent = moves;
 
-
-            // Update remaining moves
+            // Update remaining moves using this round's limit
             remainingMovesEl.textContent =
-              Math.max(
-                0,
-                MAX_MOVES_PER_ROUND - moves
-              );
-
+              Math.max(0, problem.maxMoves - moves);
 
             statusEl.textContent = "";
 
@@ -917,10 +881,10 @@ rounds.forEach((problem, roundIndex) => {
 
 
             // =============================================
-            // SECOND: CHECK MAXIMUM NUMBER OF MOVES
+            // SECOND: CHECK THIS ROUND'S MOVE LIMIT
             // =============================================
 
-            if (moves >= MAX_MOVES_PER_ROUND) {
+            if (moves >= problem.maxMoves) {
 
               statusEl.textContent =
                 "Maximum number of moves reached. Moving to the next round.";
@@ -959,7 +923,6 @@ rounds.forEach((problem, roundIndex) => {
 
         finished = true;
 
-
         // Stop timer
         if (intervalId !== null) {
 
@@ -967,9 +930,7 @@ rounds.forEach((problem, roundIndex) => {
 
         }
 
-
         finishButton.disabled = true;
-
 
         // Determine why the round ended
         let terminationReason;
@@ -978,7 +939,7 @@ rounds.forEach((problem, roundIndex) => {
 
           terminationReason = "solved";
 
-        } else if (moves >= MAX_MOVES_PER_ROUND) {
+        } else if (moves >= problem.maxMoves) {
 
           terminationReason = "maximum_moves_reached";
 
@@ -987,7 +948,6 @@ rounds.forEach((problem, roundIndex) => {
           terminationReason = "participant_ended";
 
         }
-
 
         // Prepare round results
         const result = {
@@ -1002,11 +962,11 @@ rounds.forEach((problem, roundIndex) => {
 
           moves: moves,
 
-          max_moves_allowed: MAX_MOVES_PER_ROUND,
+          max_moves_allowed: problem.maxMoves,
 
           remaining_moves: Math.max(
             0,
-            MAX_MOVES_PER_ROUND - moves
+            problem.maxMoves - moves
           ),
 
           time_seconds: elapsedSeconds(),
@@ -1025,13 +985,16 @@ rounds.forEach((problem, roundIndex) => {
 
         };
 
-
         // Save round summary
         allRoundResults.push({
 
           round_id: result.round_id,
 
           moves: result.moves,
+
+          max_moves_allowed: result.max_moves_allowed,
+
+          remaining_moves: result.remaining_moves,
 
           time_seconds: result.time_seconds,
 
@@ -1041,7 +1004,6 @@ rounds.forEach((problem, roundIndex) => {
             result.termination_reason
 
         });
-
 
         // End current round and automatically
         // proceed to the next timeline trial
@@ -1112,5 +1074,3 @@ jsPsych.run(timeline);
 
 </body>
 </html>
-
-
