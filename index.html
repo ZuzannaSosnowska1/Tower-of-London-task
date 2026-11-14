@@ -162,7 +162,33 @@
       margin-top: 6px;
     }
 
-    /* PSIQ questionnaire styling */
+    .timer-box {
+      margin: 15px auto;
+      padding: 12px;
+      background: #fff3cd;
+      border: 2px solid #e0a800;
+      border-radius: 8px;
+      max-width: 400px;
+      box-sizing: border-box;
+    }
+
+    .timer-label {
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    #time-remaining {
+      font-size: 36px;
+      font-weight: bold;
+      color: #8a2d22;
+    }
+
+    .timer-warning {
+      color: #dc2626 !important;
+    }
+
+    /* PSIQ questionnaire */
+
     .psiq-container {
       max-width: 1000px;
       margin: auto;
@@ -252,7 +278,8 @@
 </head>
 
 <body>
-  <div id="experiment"></div>
+
+<div id="experiment"></div>
 
 <script>
 "use strict";
@@ -276,6 +303,7 @@ const BALL_COLORS = {
 };
 
 let participantId = "";
+let demographicResponses = {};
 let psiqResponses = {};
 
 
@@ -283,81 +311,103 @@ let psiqResponses = {};
 // TOWER OF LONDON ROUNDS
 // =========================================================
 
-// TEST ROUND — RUNS FIRST
+// PRACTICE ROUND
 
 const testRound = {
   id: "TOL_test",
   start: { A: [1], B: [2], C: [3] },
   goal: { A: [1, 2, 3], B: [], C: [] },
-  maxMoves: 2
+  maxMoves: 2,
+  timeLimit: 60
 };
 
 
-// NINE ACTUAL EXPERIMENT ROUNDS
+// NINE EXPERIMENTAL ROUNDS
+// EDIT maxMoves AND timeLimit INDEPENDENTLY.
 
 const rounds = [
+
   {
     id: "TOL_01",
     start: { A: [3, 1], B: [2], C: [] },
     goal: { A: [2], B: [1, 3], C: [] },
-    maxMoves: 4
+    maxMoves: 4,
+    timeLimit: 60
   },
+
   {
     id: "TOL_02",
     start: { A: [], B: [3, 2], C: [1] },
     goal: { A: [3], B: [1], C: [2] },
-    maxMoves: 4
+    maxMoves: 4,
+    timeLimit: 60
   },
+
   {
     id: "TOL_03",
     start: { A: [1], B: [2, 3], C: [] },
     goal: { A: [3, 2, 1], B: [], C: [] },
-    maxMoves: 4
+    maxMoves: 4,
+    timeLimit: 45
   },
+
   {
     id: "TOL_04",
     start: { A: [3, 2], B: [1], C: [] },
     goal: { A: [2, 1, 3], B: [], C: [] },
-    maxMoves: 5
+    maxMoves: 5,
+    timeLimit: 45
   },
+
   {
     id: "TOL_05",
     start: { A: [2, 3], B: [1], C: [] },
     goal: { A: [1, 3], B: [], C: [2] },
-    maxMoves: 5
+    maxMoves: 5,
+    timeLimit: 45
   },
+
   {
     id: "TOL_06",
     start: { A: [3, 2], B: [], C: [1] },
     goal: { A: [2, 1, 3], B: [], C: [] },
-    maxMoves: 5
+    maxMoves: 5,
+    timeLimit: 60
   },
+
   {
     id: "TOL_07",
     start: { A: [2, 3], B: [1], C: [] },
     goal: { A: [1, 2, 3], B: [], C: [] },
-    maxMoves: 6
+    maxMoves: 6,
+    timeLimit: 60
   },
+
   {
     id: "TOL_08",
     start: { A: [3, 1], B: [2], C: [] },
     goal: { A: [1, 2], B: [3], C: [] },
-    maxMoves: 6
+    maxMoves: 6,
+    timeLimit: 45
   },
+
   {
     id: "TOL_09",
     start: { A: [1], B: [3], C: [2] },
     goal: { A: [2], B: [1], C: [3] },
-    maxMoves: 6
+    maxMoves: 6,
+    timeLimit: 45
   }
+
 ];
 
 
 // =========================================================
-// PSIQ: PLYMOUTH SENSORY IMAGERY QUESTIONNAIRE
+// PSIQ QUESTIONNAIRE
 // =========================================================
 
 const psiqSections = [
+
   {
     name: "appearance",
     title: "Imagine the appearance of:",
@@ -368,6 +418,7 @@ const psiqSections = [
       "the front door of your house"
     ]
   },
+
   {
     name: "sound",
     title: "Imagine the sound of:",
@@ -379,6 +430,7 @@ const psiqSections = [
       "the sound of children playing"
     ]
   },
+
   {
     name: "smell",
     title: "Imagine the smell of:",
@@ -390,6 +442,7 @@ const psiqSections = [
       "burning wood"
     ]
   },
+
   {
     name: "taste",
     title: "Imagine the taste of:",
@@ -401,6 +454,7 @@ const psiqSections = [
       "black pepper"
     ]
   },
+
   {
     name: "touch",
     title: "Imagine touching:",
@@ -412,6 +466,7 @@ const psiqSections = [
       "fur"
     ]
   },
+
   {
     name: "bodily_sensation",
     title: "Imagine the bodily sensation of:",
@@ -423,6 +478,7 @@ const psiqSections = [
       "walking briskly in the cold"
     ]
   },
+
   {
     name: "feeling",
     title: "Imagine feeling:",
@@ -434,47 +490,60 @@ const psiqSections = [
       "scared"
     ]
   }
+
 ];
 
 
-// Build the PSIQ questionnaire HTML
+// =========================================================
+// BUILD PSIQ QUESTIONNAIRE HTML
+// =========================================================
 
 let psiqHTML = `
-  <div class="psiq-container">
-    <h2 style="text-align: center;">
-      Psi-Q: The Plymouth Sensory Imagery Questionnaire
-    </h2>
 
-    <p>
-      Please try to form the images described below and rate each
-      mental image on the following scale:
-    </p>
+<div class="psiq-container">
 
-    <p style="text-align: center; font-weight: bold;">
-      0 (no image at all) to 10 (image as clear and vivid as real life)
-    </p>
+  <h2 style="text-align:center;">
+    Psi-Q: The Plymouth Sensory Imagery Questionnaire
+  </h2>
 
-    <p>
-      Select one number for every item. Please answer all items.
-    </p>
+  <p>
+    Please try to form the images described below and rate
+    each mental image on the following scale:
+  </p>
+
+  <p style="text-align:center;font-weight:bold;">
+    0 (no image at all) to 10 (image as clear and vivid as real life)
+  </p>
+
+  <p>
+    Select one number for every item. Please answer all items.
+  </p>
+
 `;
 
 psiqSections.forEach(section => {
+
   psiqHTML += `
     <div class="psiq-section">
       <h3>${section.title}</h3>
   `;
 
   section.items.forEach((item, index) => {
+
     const questionName = `${section.name}_${index + 1}`;
 
     psiqHTML += `
       <div class="psiq-item">
-        <div class="psiq-question">${item}</div>
+
+        <div class="psiq-question">
+          ${item}
+        </div>
+
         <div class="psiq-scale">
     `;
 
     for (let score = 0; score <= 10; score++) {
+
       psiqHTML += `
         <label>
           ${score}
@@ -485,153 +554,158 @@ psiqSections.forEach(section => {
           >
         </label>
       `;
+
     }
 
     psiqHTML += `
         </div>
       </div>
     `;
+
   });
 
   psiqHTML += `</div>`;
+
 });
 
 psiqHTML += `
-    <p style="font-size: 13px; color: #555;">
-      To score, find the mean response within each subscale, or overall.
-    </p>
-  </div>
+
+  <p style="font-size:13px;color:#555;">
+    To score, find the mean response within each subscale,
+    or overall.
+  </p>
+
+</div>
+
 `;
 
 
-// PSIQ trial
-
-const psiqTrial = {
-  type: jsPsychHtmlButtonResponse,
-  stimulus: psiqHTML,
-  choices: ["Submit questionnaire"],
-
-  on_load: function() {
-    const submitButton = document.querySelector(
-      "#jspsych-html-button-response-btngroup button"
-    );
-
-    if (!submitButton) {
-      console.error("PSIQ submit button could not be found.");
-      return;
-    }
-
-    // Validate all 35 responses before jsPsych submits the trial.
-    submitButton.addEventListener("click", function(event) {
-      const unanswered = [];
-
-      psiqSections.forEach(section => {
-        section.items.forEach((item, index) => {
-          const questionName = `${section.name}_${index + 1}`;
-
-          const selected = document.querySelector(
-            `input[name="${questionName}"]:checked`
-          );
-
-          if (!selected) {
-            unanswered.push(questionName);
-          }
-        });
-      });
-
-      if (unanswered.length > 0) {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-
-        alert("Please answer every question before submitting.");
-        return;
-      }
-
-      // Collect all 35 answers.
-      psiqResponses = {};
-
-      psiqSections.forEach(section => {
-        section.items.forEach((item, index) => {
-          const questionName = `${section.name}_${index + 1}`;
-
-          const selected = document.querySelector(
-            `input[name="${questionName}"]:checked`
-          );
-
-          psiqResponses[questionName] = Number(selected.value);
-        });
-      });
-    }, true);
-  },
-
-  on_finish: function(data) {
-    data.task = "PSIQ";
-    data.participant_id = participantId;
-    data.psiq_responses = psiqResponses;
-
-    // Store each response as a separate CSV data column.
-    Object.assign(data, psiqResponses);
-
-    // Calculate the mean score for each subscale.
-    psiqSections.forEach(section => {
-      const values = section.items.map((item, index) => {
-        return psiqResponses[`${section.name}_${index + 1}`];
-      });
-
-      const mean = values.length
-        ? values.reduce((sum, value) => sum + value, 0) / values.length
-        : null;
-
-      data[`${section.name}_mean`] = mean;
-    });
-
-    // Calculate the overall mean across all 35 items.
-    const allScores = Object.values(psiqResponses);
-
-    data.psiq_overall_mean = allScores.length === 35
-      ? allScores.reduce((sum, value) => sum + value, 0) / allScores.length
-      : null;
-  }
-};
-
-
 // =========================================================
-// INITIALIZE jsPsych AND EXPERIMENT TIMELINE
+// INITIALIZE jsPsych
 // =========================================================
 
 const jsPsych = initJsPsych({
+
   display_element: "experiment",
 
   on_finish: function() {
-    // Download all trial data as a CSV file when the experiment ends.
+
     jsPsych.data.get().localSave(
       "csv",
       "tower_of_london_and_psiq_data.csv"
     );
+
   }
+
 });
 
 const timeline = [];
 
 
 // =========================================================
-// PARTICIPANT ID
+// 1. DEMOGRAPHIC QUESTIONNAIRE
 // =========================================================
 
 timeline.push({
+
   type: jsPsychSurveyText,
 
+  preamble: `
+
+    <div class="instructions">
+
+      <h2>Demographic Questionnaire</h2>
+
+      <p>
+        Please provide the following demographic information.
+      </p>
+
+    </div>
+
+  `,
+
   questions: [
+
     {
-      prompt: "Participant ID:",
-      name: "participant_id",
-      required: true
+      prompt: "Age (in years):",
+      name: "age",
+      required: true,
+      placeholder: "Enter your age"
+    },
+
+    {
+      prompt: "Gender:",
+      name: "gender",
+      required: true,
+      placeholder: "Enter your answer or prefer not to say"
+    },
+
+    {
+      prompt: "Highest level of education completed:",
+      name: "education",
+      required: true,
+      placeholder: "Enter your answer"
     }
+
   ],
 
   button_label: "Continue",
 
   on_finish: function(data) {
+
+    demographicResponses = data.response || {};
+
+    data.task = "demographics";
+
+    Object.assign(data, demographicResponses);
+
+  }
+
+});
+
+
+// =========================================================
+// 2. UNIQUE PARTICIPANT ID
+// =========================================================
+
+timeline.push({
+
+  type: jsPsychSurveyText,
+
+  preamble: `
+
+    <div class="instructions">
+
+      <h2>Participant Identification</h2>
+
+      <p>
+        Please enter your unique participant identification code.
+      </p>
+
+      <p>
+        Make sure you enter the identification code provided
+        to you by the researcher.
+      </p>
+
+    </div>
+
+  `,
+
+  questions: [
+
+    {
+      prompt: "Unique Participant ID:",
+      name: "participant_id",
+      required: true,
+      placeholder: "Enter your participant ID"
+    }
+
+  ],
+
+  button_label: "Continue",
+
+  on_finish: function(data) {
+
     const response = data.response || {};
 
     participantId = String(
@@ -639,68 +713,108 @@ timeline.push({
     ).trim();
 
     data.participant_id = participantId;
+
   }
+
 });
 
 
 // =========================================================
-// INSTRUCTIONS
+// 3. TOWER OF LONDON INSTRUCTIONS
 // =========================================================
 
 timeline.push({
+
   type: jsPsychHtmlButtonResponse,
 
   stimulus: `
+
     <div class="instructions">
+
       <h2>Tower of London task</h2>
 
       <p>
         In each round, you will see a starting arrangement
         and a goal arrangement. Your task is to make the
-        arrangement on the upper part of the screen match the goal on the bottom part.
+        arrangement on the upper part of the screen match
+        the goal on the bottom part.
       </p>
 
       <ul>
-        <li>Click the top ball on a peg to select it.</li>
-        <li>Then click the peg where you want to place that ball.</li>
-        <li>You can move only one ball at a time.</li>
-        <li>A ball can be placed on top of any other ball.</li>
+
+        <li>
+          Click the top ball on a peg to select it.
+        </li>
+
+        <li>
+          Then click the peg where you want to place that ball.
+        </li>
+
+        <li>
+          You can move only one ball at a time.
+        </li>
+
+        <li>
+          A ball can be placed on top of any other ball.
+        </li>
+
         <li>
           Pegs have different capacities:
-         Peg A holds up to 3 balls, B up to 2, and C up to 1.
+          Peg A holds up to 3 balls, B up to 2, and C up to 1.
         </li>
-        <li>A peg cannot hold more balls than its capacity.</li>
+
+        <li>
+          A peg cannot hold more balls than its capacity.
+        </li>
+
         <li>
           If you click the selected ball's peg again,
           the selection is cancelled.
         </li>
+
         <li>
           Each round has its own maximum number of moves.
-          The maximum is displayed at the top of the screen.
         </li>
+
         <li>
-          If you reach the maximum number of moves without
-          solving the problem, you will automatically proceed
-          to the next round.
+          Each round also has its own time limit.
+          The countdown timer will be clearly displayed.
         </li>
+
+        <li>
+          If you reach the maximum number of moves,
+          the round will end automatically.
+        </li>
+
+        <li>
+          If the time limit expires before you solve the task,
+          the round will automatically end and you will
+          proceed to the next round.
+        </li>
+
         <li>
           When the upper board matches the goal board,
           the round ends automatically.
-          The maximum time to complete each roud will be shown on the screen
         </li>
+
       </ul>
 
       <p>
-        You will first complete <strong>one test round</strong>
-        with a maximum of <strong>2 moves</strong>.
-        This is followed by <strong>${rounds.length} actual experiment rounds</strong>.
+        You will first complete one practice round.
+        This is followed by nine actual experiment rounds.
       </p>
 
-      <p>Try to reach the goal carefully.</p>
+      <p>
+        Please try to complete each task as accurately and
+        quickly as possible.
+      </p>
+
     </div>
+
   `,
 
   choices: ["Start"]
+
 });
 
 
@@ -709,19 +823,28 @@ timeline.push({
 // =========================================================
 
 function clonePegs(pegs) {
+
   return {
     A: [...pegs.A],
     B: [...pegs.B],
     C: [...pegs.C]
   };
+
 }
 
 
 function sameArrangement(a, b) {
+
   return PEGS.every(peg =>
+
     a[peg].length === b[peg].length &&
-    a[peg].every((ball, index) => ball === b[peg][index])
+
+    a[peg].every((ball, index) =>
+      ball === b[peg][index]
+    )
+
   );
+
 }
 
 
@@ -737,33 +860,49 @@ function renderBoard(
   onSelectBall,
   onSelectPeg
 ) {
+
   boardElement.innerHTML = "";
 
   PEGS.forEach(pegName => {
+
     const pegEl = document.createElement("div");
+
     pegEl.className = "peg";
+
     pegEl.dataset.peg = pegName;
 
     const rod = document.createElement("div");
+
     rod.className = "rod";
-    rod.style.height = (CAPACITY[pegName] * 48 + 16) + "px";
+
+    rod.style.height =
+      (CAPACITY[pegName] * 48 + 16) + "px";
+
     pegEl.appendChild(rod);
 
+
     pegState[pegName].forEach((ballNumber, index) => {
+
       const ball = document.createElement("button");
 
       ball.type = "button";
+
       ball.className = "ball" + (
+
         !isGoal &&
         selected &&
         selected.peg === pegName &&
         selected.ball === ballNumber
+
           ? " selected"
           : ""
+
       );
 
       ball.textContent = ballNumber;
+
       ball.style.backgroundColor = BALL_COLORS[ballNumber];
+
       ball.style.bottom = (index * 42 + 3) + "px";
 
       ball.setAttribute(
@@ -771,90 +910,145 @@ function renderBoard(
         "Ball " + ballNumber + " on peg " + pegName
       );
 
-      const isTop = index === pegState[pegName].length - 1;
+      const isTop =
+        index === pegState[pegName].length - 1;
 
       if (isGoal || !isTop) {
+
         ball.disabled = true;
+
       } else {
+
         ball.addEventListener("click", function(event) {
+
           event.stopPropagation();
+
           onSelectBall(pegName, ballNumber);
+
         });
+
       }
 
       pegEl.appendChild(ball);
+
     });
 
+
     const label = document.createElement("div");
+
     label.className = "peg-label";
-    label.textContent = pegName + " (max " + CAPACITY[pegName] + ")";
+
+    label.textContent =
+      pegName + " (max " + CAPACITY[pegName] + ")";
+
     pegEl.appendChild(label);
 
+
     if (!isGoal) {
+
       pegEl.addEventListener("click", function() {
+
         onSelectPeg(pegName);
+
       });
 
       pegEl.style.cursor = "pointer";
+
     }
 
     boardElement.appendChild(pegEl);
+
   });
+
 }
 
 
 // =========================================================
-// CREATE THE TEST ROUND AND NINE ACTUAL ROUNDS
+// 4. CREATE PRACTICE ROUND AND EXPERIMENTAL ROUNDS
 // =========================================================
 
 const allProblems = [testRound, ...rounds];
 
+
 allProblems.forEach((problem, roundIndex) => {
+
   const isTestRound = roundIndex === 0;
+
   const actualRoundNumber = roundIndex;
 
-  if (!Number.isInteger(problem.maxMoves) || problem.maxMoves < 1) {
-    throw new Error("Invalid maxMoves for round: " + problem.id);
+  if (
+    !Number.isInteger(problem.maxMoves) ||
+    problem.maxMoves < 1
+  ) {
+    throw new Error(
+      "Invalid maxMoves for round: " + problem.id
+    );
   }
 
+  if (
+    !Number.isInteger(problem.timeLimit) ||
+    problem.timeLimit < 1
+  ) {
+    throw new Error(
+      "Invalid timeLimit for round: " + problem.id
+    );
+  }
+
+
   timeline.push({
+
     type: jsPsychHtmlButtonResponse,
 
     stimulus: `
+
       ${
         isTestRound
-          ? `
-            <h2 style="color: #A8ADFF;">
-              TEST ROUND – PRACTICE ONLY
-            </h2>
 
-            <div class="test-notice">
-              <h3>Practice Round</h3>
+        ? `
 
-              <p>
-                This is a test round to help you become
-                familiar with the task.
-              </p>
+          <h2 style="color:#5555aa;">
+            TEST ROUND – PRACTICE ONLY
+          </h2>
 
-              <p class="move-limit">
-                Maximum moves allowed: 2
-              </p>
+          <div class="test-notice">
 
-              <p>
-                After completing this test round, you will
-                proceed to the actual experiment.
-              </p>
-            </div>
-          `
-          : `
-            <h2>
-              Experiment Round ${actualRoundNumber}
-              of ${rounds.length}
-            </h2>
-          `
+            <h3>Practice Round</h3>
+
+            <p>
+              This is a practice round to help you become
+              familiar with the task.
+            </p>
+
+            <p class="move-limit">
+              Maximum moves allowed: ${problem.maxMoves}
+            </p>
+
+            <p class="move-limit">
+              Maximum time allowed: ${problem.timeLimit} seconds
+            </p>
+
+            <p>
+              After completing this practice round,
+              you will proceed to the actual experiment.
+            </p>
+
+          </div>
+
+        `
+
+        : `
+
+          <h2>
+            Experiment Round ${actualRoundNumber}
+            of ${rounds.length}
+          </h2>
+
+        `
       }
 
+
       <div id="stats">
+
         Moves:
         <span id="move-count">0</span>
 
@@ -865,301 +1059,725 @@ allProblems.forEach((problem, roundIndex) => {
 
         &nbsp; | &nbsp;
 
-        Remaining:
+        Remaining moves:
         <span id="remaining-moves">${problem.maxMoves}</span>
 
-        &nbsp; | &nbsp;
+        <div class="timer-box">
 
-        Time:
+          <div class="timer-label">
+            MAXIMUM TIME ALLOWED
+          </div>
+
+          <div>
+            <span id="time-remaining">
+              ${problem.timeLimit}
+            </span>
+            <span style="font-size:22px;">seconds</span>
+          </div>
+
+          <div style="font-size:13px;">
+            This round will automatically end when time expires.
+          </div>
+
+        </div>
+
+        Elapsed time:
         <span id="elapsed-time">0</span> seconds
+
       </div>
 
+
       <div class="boards-wrap">
+
         <div class="board-panel">
+
           <h3>Your arrangement</h3>
+
           <div id="start-board" class="board"></div>
+
           <div class="capacity-note">
             Move the balls on this board.
           </div>
+
         </div>
 
+
         <div class="board-panel">
+
           <h3>Goal arrangement</h3>
+
           <div id="goal-board" class="board"></div>
+
           <div class="capacity-note">
             Match this arrangement exactly.
           </div>
+
         </div>
+
       </div>
+
 
       <div id="status" aria-live="polite">
         Select the top ball, then select a destination peg.
       </div>
 
+
       <button id="finish-round" type="button">
         End this round
       </button>
+
     `,
+
 
     choices: [],
 
+
     data: {
+
       task: "tower_of_london",
+
       round_id: problem.id,
+
       round_number: roundIndex + 1,
+
       is_test_round: isTestRound,
-      actual_experiment_round: isTestRound ? null : actualRoundNumber,
-      max_moves_allowed: problem.maxMoves
+
+      actual_experiment_round:
+        isTestRound ? null : actualRoundNumber,
+
+      max_moves_allowed: problem.maxMoves,
+
+      time_limit_seconds: problem.timeLimit
+
     },
 
+
     // =====================================================
-    // LOAD EACH ROUND
+    // LOAD ROUND
     // =====================================================
 
     on_load: function() {
+
       let pegs = clonePegs(problem.start);
+
       const goal = clonePegs(problem.goal);
 
       let selected = null;
+
       let moves = 0;
+
       let finished = false;
 
       const moveLog = [];
+
       const startTime = Date.now();
 
       let intervalId = null;
 
-      const startBoard = document.getElementById("start-board");
-      const goalBoard = document.getElementById("goal-board");
-      const statusEl = document.getElementById("status");
-      const moveCountEl = document.getElementById("move-count");
-      const remainingMovesEl = document.getElementById("remaining-moves");
-      const elapsedTimeEl = document.getElementById("elapsed-time");
-      const finishButton = document.getElementById("finish-round");
+
+      const startBoard =
+        document.getElementById("start-board");
+
+      const goalBoard =
+        document.getElementById("goal-board");
+
+      const statusEl =
+        document.getElementById("status");
+
+      const moveCountEl =
+        document.getElementById("move-count");
+
+      const remainingMovesEl =
+        document.getElementById("remaining-moves");
+
+      const elapsedTimeEl =
+        document.getElementById("elapsed-time");
+
+      const timeRemainingEl =
+        document.getElementById("time-remaining");
+
+      const finishButton =
+        document.getElementById("finish-round");
 
 
+      // ===================================================
       // TIMER
+      // ===================================================
 
       function elapsedSeconds() {
-        return Math.floor((Date.now() - startTime) / 1000);
+
+        return Math.floor(
+          (Date.now() - startTime) / 1000
+        );
+
       }
+
 
       function updateTime() {
-        if (!finished) {
-          elapsedTimeEl.textContent = elapsedSeconds();
+
+        if (finished) return;
+
+        const elapsed = elapsedSeconds();
+
+        const remaining = Math.max(
+          0,
+          problem.timeLimit - elapsed
+        );
+
+        elapsedTimeEl.textContent = elapsed;
+
+        timeRemainingEl.textContent = remaining;
+
+
+        // Visual warning when 10 seconds or less remain.
+
+        if (remaining <= 10) {
+
+          timeRemainingEl.classList.add("timer-warning");
+
         }
+
+
+        // AUTOMATIC TIMEOUT
+
+        if (remaining <= 0) {
+
+          statusEl.textContent =
+            "Time limit reached. Proceeding to the next round.";
+
+          finishRound(
+            false,
+            "time_limit_reached"
+          );
+
+        }
+
       }
 
 
+      // ===================================================
       // DRAW BOTH BOARDS
+      // ===================================================
 
       function draw() {
+
         renderBoard(
+
           startBoard,
+
           pegs,
+
           false,
+
           selected,
+
 
           // SELECT A BALL
 
           function(pegName, ballNumber) {
+
             if (finished) return;
 
             selected = {
+
               peg: pegName,
+
               ball: ballNumber
+
             };
 
             statusEl.textContent =
               "Ball selected. Now click a destination peg.";
 
             draw();
+
           },
 
-          // SELECT A DESTINATION PEG
+
+          // SELECT DESTINATION PEG
 
           function(destination) {
+
             if (finished || selected === null) return;
+
 
             // Cancel selection if the same peg is clicked.
 
             if (destination === selected.peg) {
+
               selected = null;
-              statusEl.textContent = "Selection cancelled.";
+
+              statusEl.textContent =
+                "Selection cancelled.";
+
               draw();
+
               return;
+
             }
+
 
             // Check peg capacity.
 
-            if (pegs[destination].length >= CAPACITY[destination]) {
+            if (
+              pegs[destination].length >=
+              CAPACITY[destination]
+            ) {
+
               statusEl.textContent =
                 "That peg is full. Choose a peg with free space.";
+
               return;
+
             }
+
 
             const source = selected.peg;
-            const ballNumber = pegs[source][pegs[source].length - 1];
+
+            const ballNumber =
+              pegs[source][pegs[source].length - 1];
+
 
             if (ballNumber !== selected.ball) {
+
               selected = null;
+
               draw();
+
               return;
+
             }
+
 
             // MAKE THE MOVE
 
             pegs[source].pop();
+
             pegs[destination].push(ballNumber);
+
             moves += 1;
 
-            // Record move information.
+
+            // RECORD MOVE INFORMATION
 
             moveLog.push({
+
               move_number: moves,
+
               ball: ballNumber,
+
               from_peg: source,
+
               to_peg: destination,
+
               elapsed_seconds: elapsedSeconds(),
+
               arrangement_after_move: JSON.stringify(pegs)
+
             });
+
 
             selected = null;
 
             moveCountEl.textContent = moves;
-            remainingMovesEl.textContent =
-              Math.max(0, problem.maxMoves - moves);
+
+            remainingMovesEl.textContent = Math.max(
+              0,
+              problem.maxMoves - moves
+            );
 
             statusEl.textContent = "";
 
             draw();
 
 
-            // CHECK WHETHER THE GOAL HAS BEEN REACHED.
+            // CHECK WHETHER GOAL HAS BEEN REACHED.
 
             if (sameArrangement(pegs, goal)) {
+
               statusEl.textContent =
                 "Correct! You completed this round.";
 
               finishRound(true);
+
               return;
+
             }
 
 
-            // CHECK THE ROUND'S MOVE LIMIT.
+            // CHECK MOVE LIMIT.
 
             if (moves >= problem.maxMoves) {
+
               statusEl.textContent =
                 "Maximum number of moves reached. Moving to the next round.";
 
-              finishRound(false);
+              finishRound(
+                false,
+                "maximum_moves_reached"
+              );
+
               return;
+
             }
+
           }
+
         );
 
 
-        // Draw the goal board.
+        // DRAW GOAL BOARD
 
         renderBoard(
+
           goalBoard,
+
           goal,
+
           true,
+
           null,
+
           null,
+
           null
+
         );
+
       }
 
 
+      // ===================================================
       // FINISH ROUND
+      // ===================================================
 
-      function finishRound(solved) {
+      function finishRound(
+        solved,
+        forcedReason = null
+      ) {
+
         if (finished) return;
 
         finished = true;
 
+
         if (intervalId !== null) {
+
           clearInterval(intervalId);
+
         }
+
 
         finishButton.disabled = true;
 
+
         let terminationReason;
 
-        if (solved) {
+
+        if (forcedReason) {
+
+          terminationReason = forcedReason;
+
+        } else if (solved) {
+
           terminationReason = "solved";
+
         } else if (moves >= problem.maxMoves) {
+
           terminationReason = "maximum_moves_reached";
+
         } else {
+
           terminationReason = "participant_ended";
+
         }
 
-        // Prepare round results.
+
+        // PREPARE ROUND RESULTS
 
         const result = {
+
           task: "tower_of_london",
+
           participant_id: participantId,
+
+          ...demographicResponses,
+
           round_id: problem.id,
+
           round_number: roundIndex + 1,
+
           is_test_round: isTestRound,
 
-          actual_experiment_round: isTestRound
-            ? null
-            : actualRoundNumber,
+          actual_experiment_round:
+            isTestRound ? null : actualRoundNumber,
 
           moves: moves,
+
           max_moves_allowed: problem.maxMoves,
-          remaining_moves: Math.max(0, problem.maxMoves - moves),
+
+          time_limit_seconds: problem.timeLimit,
+
+          remaining_moves: Math.max(
+            0,
+            problem.maxMoves - moves
+          ),
+
           time_seconds: elapsedSeconds(),
+
           solved: solved,
+
           termination_reason: terminationReason,
 
           start_state: JSON.stringify(problem.start),
+
           goal_state: JSON.stringify(goal),
+
           final_state: JSON.stringify(pegs),
+
           move_log: JSON.stringify(moveLog)
+
         };
 
-        // End the current round and proceed to the next timeline trial.
+
+        // END CURRENT ROUND AND MOVE TO NEXT TRIAL
 
         jsPsych.finishTrial(result);
+
       }
 
 
+      // ===================================================
       // MANUAL END ROUND BUTTON
+      // ===================================================
 
       finishButton.addEventListener("click", function() {
-        finishRound(false);
+
+        finishRound(
+          false,
+          "participant_ended"
+        );
+
       });
 
 
+      // ===================================================
       // START ROUND
+      // ===================================================
 
       draw();
+
       updateTime();
 
-      intervalId = setInterval(updateTime, 500);
+      intervalId = setInterval(
+        updateTime,
+        250
+      );
+
     }
+
   });
+
 });
 
 
 // =========================================================
-// ADD PSIQ AFTER ALL TOWER OF LONDON ROUNDS
+// 5. PSIQ QUESTIONNAIRE AFTER ALL TOWER OF LONDON ROUNDS
 // =========================================================
+
+const psiqTrial = {
+
+  type: jsPsychHtmlButtonResponse,
+
+  stimulus: psiqHTML,
+
+  choices: ["Submit questionnaire"],
+
+
+  on_load: function() {
+
+    const submitButton = document.querySelector(
+      "#jspsych-html-button-response-btngroup button"
+    );
+
+    if (!submitButton) {
+
+      console.error(
+        "PSIQ submit button could not be found."
+      );
+
+      return;
+
+    }
+
+
+    // VALIDATE ALL 35 RESPONSES
+
+    submitButton.addEventListener(
+
+      "click",
+
+      function(event) {
+
+        const unanswered = [];
+
+
+        psiqSections.forEach(section => {
+
+          section.items.forEach((item, index) => {
+
+            const questionName =
+              `${section.name}_${index + 1}`;
+
+            const selected = document.querySelector(
+              `input[name="${questionName}"]:checked`
+            );
+
+            if (!selected) {
+
+              unanswered.push(questionName);
+
+            }
+
+          });
+
+        });
+
+
+        if (unanswered.length > 0) {
+
+          event.preventDefault();
+
+          event.stopImmediatePropagation();
+
+          alert(
+            "Please answer every question before submitting."
+          );
+
+          return;
+
+        }
+
+
+        // COLLECT ALL RESPONSES
+
+        psiqResponses = {};
+
+
+        psiqSections.forEach(section => {
+
+          section.items.forEach((item, index) => {
+
+            const questionName =
+              `${section.name}_${index + 1}`;
+
+            const selected = document.querySelector(
+              `input[name="${questionName}"]:checked`
+            );
+
+            psiqResponses[questionName] =
+              Number(selected.value);
+
+          });
+
+        });
+
+      },
+
+      true
+
+    );
+
+  },
+
+
+  // =====================================================
+  // CALCULATE PSIQ SCORES
+  // =====================================================
+
+  on_finish: function(data) {
+
+    data.task = "PSIQ";
+
+    data.participant_id = participantId;
+
+    Object.assign(
+      data,
+      demographicResponses
+    );
+
+    data.psiq_responses = psiqResponses;
+
+    // STORE EACH RESPONSE AS A SEPARATE CSV COLUMN
+
+    Object.assign(
+      data,
+      psiqResponses
+    );
+
+
+    // CALCULATE SUBSCALE MEANS
+
+    psiqSections.forEach(section => {
+
+      const values = section.items.map(
+        (item, index) => {
+
+          return psiqResponses[
+            `${section.name}_${index + 1}`
+          ];
+
+        }
+      );
+
+
+      const mean = values.length
+
+        ? values.reduce(
+            (sum, value) => sum + value,
+            0
+          ) / values.length
+
+        : null;
+
+
+      data[`${section.name}_mean`] = mean;
+
+    });
+
+
+    // CALCULATE OVERALL MEAN
+
+    const allScores = Object.values(psiqResponses);
+
+    data.psiq_overall_mean =
+      allScores.length === 35
+
+        ? allScores.reduce(
+            (sum, value) => sum + value,
+            0
+          ) / allScores.length
+
+        : null;
+
+  }
+
+};
+
 
 timeline.push(psiqTrial);
 
 
 // =========================================================
-// FINAL THANK-YOU SCREEN
+// 6. FINAL THANK-YOU SCREEN
 // =========================================================
 
 timeline.push({
+
   type: jsPsychHtmlButtonResponse,
 
   stimulus: `
+
     <h2>Thank you!</h2>
 
     <p>
@@ -1170,18 +1788,21 @@ timeline.push({
     <p>
       Click Finish to complete the experiment.
     </p>
+
   `,
 
   choices: ["Finish"]
+
 });
 
 
 // =========================================================
-// RUN THE EXPERIMENT
+// 7. RUN EXPERIMENT
 // =========================================================
 
 jsPsych.run(timeline);
 
 </script>
+
 </body>
 </html>
