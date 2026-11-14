@@ -395,7 +395,6 @@ const psiqSections = [
     title: "Imagine the taste of:",
     items: [
       "mustard",
-      "atoothpaste",
       "soft towel",
       "lemon",
       "sea water",
@@ -658,7 +657,7 @@ timeline.push({
       <p>
         In each round, you will see a starting arrangement
         and a goal arrangement. Your task is to make the
-        arrangement on the left match the goal on the right.
+        arrangement on the upper part of the screen match the goal on the bottom part.
       </p>
 
       <ul>
@@ -668,7 +667,7 @@ timeline.push({
         <li>A ball can be placed on top of any other ball.</li>
         <li>
           Pegs have different capacities:
-          A holds up to 3 balls, B up to 2, and C up to 1.
+         Peg A holds up to 3 balls, B up to 2, and C up to 1.
         </li>
         <li>A peg cannot hold more balls than its capacity.</li>
         <li>
@@ -685,8 +684,9 @@ timeline.push({
           to the next round.
         </li>
         <li>
-          When the left board matches the goal board,
+          When the upper board matches the goal board,
           the round ends automatically.
+          The maximum time to complete each roud will be shown on the screen
         </li>
       </ul>
 
@@ -824,7 +824,7 @@ allProblems.forEach((problem, roundIndex) => {
       ${
         isTestRound
           ? `
-            <h2 style="color: #9a6700;">
+            <h2 style="color: #A8ADFF;">
               TEST ROUND – PRACTICE ONLY
             </h2>
 
@@ -833,7 +833,7 @@ allProblems.forEach((problem, roundIndex) => {
 
               <p>
                 This is a test round to help you become
-                familiar with the Tower of London task.
+                familiar with the task.
               </p>
 
               <p class="move-limit">
