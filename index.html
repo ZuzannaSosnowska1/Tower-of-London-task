@@ -285,6 +285,311 @@ const rounds = [
 ];
 
 
+// --------------------------------------------------
+// PSIQ: Plymouth Sensory Imagery Questionnaire
+// --------------------------------------------------
+
+const psiqSections = [
+  {
+    name: "appearance",
+    title: "Imagine the appearance of:",
+    items: [
+      "a friend you know well",
+      "a cat climbing a tree",
+      "a bonfire",
+      "the front door of your house"
+    ]
+  },
+  {
+    name: "sound",
+    title: "Imagine the sound of:",
+    items: [
+      "an ambulance siren",
+      "hands clapping in applause",
+      "the mewing of a cat",
+      "the sound of a car horn",
+      "the sound of children playing"
+    ]
+  },
+  {
+    name: "smell",
+    title: "Imagine the smell of:",
+    items: [
+      "a stuffy room",
+      "a rose",
+      "fresh paint",
+      "newly cut grass",
+      "burning wood"
+    ]
+  },
+  {
+    name: "taste",
+    title: "Imagine the taste of:",
+    items: [
+      "mustard",
+      "atoothpaste",
+      "soft towel",
+      "lemon",
+      "sea water",
+      "black pepper"
+    ]
+  },
+  {
+    name: "touch",
+    title: "Imagine touching:",
+    items: [
+      "warm sand",
+      "a soft towel",
+      "the point of a pin",
+      "icy water",
+      "fur"
+    ]
+  },
+  {
+    name: "bodily_sensation",
+    title: "Imagine the bodily sensation of:",
+    items: [
+      "relaxing in a warm bath",
+      "having a sore throat",
+      "threading a needle",
+      "jumping into a swimming pool",
+      "walking briskly in the cold"
+    ]
+  },
+  {
+    name: "feeling",
+    title: "Imagine feeling:",
+    items: [
+      "excited",
+      "relieved",
+      "furious",
+      "in love",
+      "scared"
+    ]
+  }
+];
+
+// Store questionnaire responses
+let psiqResponses = {};
+
+// Build questionnaire HTML
+let psiqHTML = `
+  <div style="max-width: 1000px; margin: auto; text-align: left;">
+    <h2 style="text-align: center;">
+      Psi-Q: The Plymouth Sensory Imagery Questionnaire
+    </h2>
+
+    <p>
+      Please try to form the images described below and rate each
+      mental image on the following scale:
+    </p>
+
+    <p style="text-align: center; font-weight: bold;">
+      0 (no image at all) to 10 (image as clear and vivid as real life)
+    </p>
+
+    <p>
+      Tick the appropriate box for each item.
+      Please rate every item.
+    </p>
+
+    <style>
+      .psiq-section {
+        margin: 25px 0;
+        padding: 15px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+      }
+
+      .psiq-item {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 10px 0;
+        border-bottom: 1px solid #eee;
+      }
+
+      .psiq-item:last-child {
+        border-bottom: none;
+      }
+
+      .psiq-question {
+        flex: 1 1 220px;
+        font-size: 16px;
+      }
+
+      .psiq-scale {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        align-items: center;
+      }
+
+      .psiq-scale label {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        font-size: 13px;
+        cursor: pointer;
+        min-width: 22px;
+      }
+
+      .psiq-scale input {
+        cursor: pointer;
+      }
+
+      @media (max-width: 600px) {
+        .psiq-item {
+          display: block;
+        }
+
+        .psiq-scale {
+          margin-top: 10px;
+          justify-content: space-between;
+        }
+      }
+    </style>
+`;
+
+// Create the seven questionnaire sections
+psiqSections.forEach(section => {
+  psiqHTML += `
+    <div class="psiq-section">
+      <h3>${section.title}</h3>
+  `;
+
+  section.items.forEach((item, index) => {
+    const questionName = `${section.name}_${index + 1}`;
+
+    psiqHTML += `
+      <div class="psiq-item">
+        <div class="psiq-question">${item}</div>
+        <div class="psiq-scale">
+    `;
+
+    for (let score = 0; score <= 10; score++) {
+      psiqHTML += `
+        <label>
+          ${score}
+          <input
+            type="radio"
+            name="${questionName}"
+            value="${score}"
+            required
+          >
+        </label>
+      `;
+    }
+
+    psiqHTML += `
+        </div>
+      </div>
+    `;
+  });
+
+  psiqHTML += `</div>`;
+});
+
+psiqHTML += `
+    <p style="font-size: 13px; color: #555;">
+      To score, find the mean response within each subscale, or overall.
+    </p>
+  </div>
+`;
+
+// Questionnaire trial
+const psiqTrial = {
+  type: jsPsychHtmlButtonResponse,
+  stimulus: psiqHTML,
+  choices: ["Submit questionnaire"],
+
+  on_load: function() {
+    const submitButton = document.querySelector(
+      "#jspsych-html-button-response-btngroup button"
+    );
+
+    if (submitButton) {
+      submitButton.addEventListener("click", function(event) {
+        const unanswered = [];
+
+        psiqSections.forEach(section => {
+          section.items.forEach((item, index) => {
+            const questionName = `${section.name}_${index + 1}`;
+
+            const selected = document.querySelector(
+              `input[name="${questionName}"]:checked`
+            );
+
+            if (!selected) {
+              unanswered.push(questionName);
+            }
+          });
+        });
+
+        if (unanswered.length > 0) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+
+          alert(
+            "Please answer every question before submitting."
+          );
+
+          return;
+        }
+
+        // Collect all answers
+        psiqResponses = {};
+
+        psiqSections.forEach(section => {
+          section.items.forEach((item, index) => {
+            const questionName = `${section.name}_${index + 1}`;
+
+            const selected = document.querySelector(
+              `input[name="${questionName}"]:checked`
+            );
+
+            psiqResponses[questionName] = Number(selected.value);
+          });
+        });
+
+      }, true);
+    }
+  },
+
+  on_finish: function(data) {
+    data.task = "PSIQ";
+    data.psiq_responses = psiqResponses;
+
+    // Store each response as a separate data column
+    Object.assign(data, psiqResponses);
+
+    // Calculate mean score for each section
+    psiqSections.forEach(section => {
+      const values = section.items.map((item, index) => {
+        return psiqResponses[`${section.name}_${index + 1}`];
+      });
+
+      const mean =
+        values.reduce((sum, value) => sum + value, 0) / values.length;
+
+      data[`${section.name}_mean`] = mean;
+    });
+
+    // Calculate overall mean
+    const allScores = Object.values(psiqResponses);
+
+    data.psiq_overall_mean =
+      allScores.reduce((sum, value) => sum + value, 0) /
+      allScores.length;
+  }
+};
+
+// Add questionnaire to the experiment timeline
+timeline.push(psiqTrial);
+  
+
 // Validate round configurations
 
 rounds.forEach(problem => {
@@ -321,15 +626,20 @@ const allRoundResults = [];
 // INITIALIZE jsPsych
 // =========================================================
 
+
+function() {
+ 
 const jsPsych = initJsPsych({
 
   display_element: "experiment",
 
-  on_finish: function () {
-
-    const totalMoves = allRoundResults.reduce(
-      (sum, r) => sum + r.moves, 0
+  on_finish: function() {
+    jsPsych.data.get().localSave(
+      "csv",
+      "tower_of_london_and_psiq_data.csv"
     );
+  }
+});
 
     const totalTime = allRoundResults.reduce(
       (sum, r) => sum + r.time_seconds, 0
