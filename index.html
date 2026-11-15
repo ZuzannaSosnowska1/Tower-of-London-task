@@ -274,11 +274,35 @@
         justify-content: space-between;
       }
     }
+ 
+  .study-contact {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: #f2f2f2;
+  padding: 12px;
+  text-align: center;
+  z-index: 9999;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+body {
+  padding-bottom: 55px;
+}
   </style>
 </head>
 
 <body>
 
+<div class="study-contact">
+  Study contact: bibibibibi |
+  <a href="mailto:bibibibibi@gmail.com">bibibibibi@gmail.com</a>
+</div>
+
+
+  
 <div id="experiment"></div>
 
 <script>
@@ -592,44 +616,39 @@ const jsPsych = initJsPsych({
 
   on_finish: function() {
 
-   
-    // =========================================
-    // 2. COLLECT ALL EXPERIMENT DATA
-    // =========================================
-
     const allData = jsPsych.data.get().values();
 
-
-    // =========================================
-    // 3. GET PARTICIPANT ID
-    // =========================================
-
-    const participantTrial = allData.find(
-      trial => trial.participant_id
-    );
-
-    const participantId =
-      participantTrial?.participant_id || "";
-
-
-    if (!participantId) {
-
-      console.error("Participant ID is missing.");
-
-      return;
-
-    }
-
-
-    // =========================================
-    // 4. GET DEMOGRAPHIC INFORMATION
-    // =========================================
-
+    // Do not submit any data if the participant declined consent.
     const demographicTrial = allData.find(
       trial => trial.task === "demographics"
     );
 
+    const consent =
+      demographicTrial?.consent ??
+      demographicTrial?.response?.consent ??
+      "";
+
+    if (consent !== "Yes") {
+      console.log("Consent not given. No data will be submitted.");
+      return;
+    }
+
+    // Get participant ID.
+    const participantTrial = allData.find(
+      trial => trial.participant_id
+    );
+
+    const savedParticipantId =
+      participantTrial?.participant_id || "";
+
+    if (!savedParticipantId) {
+      console.error("Participant ID is missing. Data not submitted.");
+      return;
+    }
+
+    // Collect demographics, including both Other text fields.
     const demographics = {
+      consent: consent,
 
       age:
         demographicTrial?.age ??
@@ -639,100 +658,63 @@ const jsPsych = initJsPsych({
         demographicTrial?.gender ??
         demographicTrial?.response?.gender ?? "",
 
+      gender_other:
+        demographicTrial?.gender_other ??
+        demographicTrial?.response?.gender_other ?? "",
+
       education:
         demographicTrial?.education ??
-        demographicTrial?.response?.education ?? ""
+        demographicTrial?.response?.education ?? "",
 
+      education_other:
+        demographicTrial?.education_other ??
+        demographicTrial?.response?.education_other ?? ""
     };
 
+    // Prepare all experiment trials.
+    const trials = allData.map((trial, index) => ({
+      ...trial,
 
-    // =========================================
-    // 5. PREPARE ALL EXPERIMENT TRIALS
-    // =========================================
+      participant_id: savedParticipantId,
 
-    const trials = allData.map((trial, index) => {
+      trial_index: trial.trial_index ?? index,
 
-      return {
+      trial_type: trial.trial_type || trial.type || "",
 
-        ...trial,
+      round_id: trial.round_id || "",
 
-        participant_id: participantId,
+      termination_reason: trial.termination_reason || ""
+    }));
 
-        trial_index:
-          trial.trial_index ?? index,
-
-        trial_type:
-          trial.trial_type || trial.type || "",
-
-        round_id:
-          trial.round_id || "",
-
-        termination_reason:
-          trial.termination_reason || ""
-
-      };
-
-    });
-
-
-    // =========================================
-    // 6. CREATE PAYLOAD FOR GOOGLE SHEETS
-    // =========================================
-
+    // Prepare Google Sheets payload.
     const payload = {
-
-      participantId: participantId,
-
+      participantId: savedParticipantId,
       demographics: demographics,
-
       trials: trials
-
     };
 
-
-    // =========================================
-    // 7. SEND DATA TO GOOGLE APPS SCRIPT
-    // =========================================
-
+    // Send data to Google Apps Script.
     fetch(GOOGLE_SCRIPT_URL, {
-
       method: "POST",
-
       mode: "no-cors",
-
       headers: {
-
         "Content-Type": "text/plain;charset=utf-8"
-
       },
-
       body: JSON.stringify(payload),
-
       keepalive: true
-
     })
 
     .then(() => {
-
-      console.log(
-        "Experiment data submission initiated."
-      );
-
+      console.log("Experiment data submission initiated.");
     })
 
     .catch(error => {
-
-      console.error(
-        "Google Sheets submission failed:",
-        error
-      );
-
+      console.error("Google Sheets submission failed:", error);
     });
 
   }
 
 });
-
 
 const timeline = [];
 
@@ -748,17 +730,15 @@ const timeline = [];
 
 timeline.push({
 
-  type: jsPsychSurveyMultiChoice,
+  type: jsPsychHtmlButtonResponse,
 
-  preamble: `
+  stimulus: `
 
     <div class="instructions">
 
       <h2>Demographic Questionnaire</h2>
 
-      <p>
-        Hello!
-      </p>
+      <p>Hello!</p>
 
       <p>
         I am a Cognitive Science student at Nicolaus Copernicus
@@ -767,90 +747,178 @@ timeline.push({
       </p>
 
       <p>
-        I would like to invite you to take part in this study.
         Participation is voluntary and anonymous.
         Please read the consent question and provide
         the following demographic information.
       </p>
 
-    </div>
+      <p>
+        <strong>1. Do you agree to participate in this study?</strong>
+      </p>
+      <select id="consent" style="padding:8px;">
+        <option value="">Please select</option>
+        <option value="Yes">Yes</option>
+        <option value="No">No</option>
+      </select>
 
+      <p>
+        <strong>2. What is your age?</strong>
+      </p>
+      <select id="age" style="padding:8px;">
+        <option value="">Please select</option>
+        <option>18–24 years</option>
+        <option>25–34 years</option>
+        <option>35–44 years</option>
+        <option>45–54 years</option>
+        <option>55 years or above</option>
+      </select>
+
+      <p>
+        <strong>3. What is your gender?</strong>
+      </p>
+      <select id="gender" style="padding:8px;">
+        <option value="">Please select</option>
+        <option>Female</option>
+        <option>Male</option>
+        <option>Non-binary</option>
+        <option>Other</option>
+        <option>Prefer not to say</option>
+      </select>
+
+      <div id="gender-other-container" style="display:none; margin-top:10px;">
+        <label for="gender-other">
+          Please specify your gender:
+        </label>
+        <input
+          id="gender-other"
+          type="text"
+          style="padding:8px; margin:5px;"
+        >
+      </div>
+
+      <p>
+        <strong>
+          4. What is your highest completed educational level?
+        </strong>
+      </p>
+      <select id="education" style="padding:8px;">
+        <option value="">Please select</option>
+        <option>High school</option>
+        <option>Undergraduate degree</option>
+        <option>Graduate degree (Master's)</option>
+        <option>Doctoral or professional degree (e.g., PhD, MD, JD)</option>
+        <option>Other</option>
+      </select>
+
+      <div id="education-other-container" style="display:none; margin-top:10px;">
+        <label for="education-other">
+          Please specify your education:
+        </label>
+        <input
+          id="education-other"
+          type="text"
+          style="padding:8px; margin:5px;"
+        >
+      </div>
+
+    </div>
   `,
 
-  questions: [
+  choices: ["Continue"],
 
-    {
-      prompt: "1. Do you agree to participate in this study?",
-      name: "consent",
-      options: ["Yes", "No"],
-      required: true
-    },
+  data: {
+    task: "demographics"
+  },
 
-    {
-      prompt: "2. What is your age?",
-      name: "age",
-      options: [
-        "18–24 years",
-        "25–34 years",
-        "35–44 years",
-        "45–54 years",
-        "55 years or above"
-      ],
-      required: true
-    },
+  on_load: function() {
 
-    {
-      prompt: "3. What is your gender?",
-      name: "gender",
-      options: [
-        "Female",
-        "Male",
-        "Non-binary",
-        "Other",
-        "Prefer not to say"
-      ],
-      required: true
-    },
+    const genderSelect = document.getElementById("gender");
+    const educationSelect = document.getElementById("education");
 
-    {
-      prompt: "4. What is your highest completed educational level?",
-      name: "education",
-      options: [
-        "High school",
-        "Undergraduate degree",
-        "Graduate degree (Master's)",
-        "Doctoral or professional degree (e.g., PhD, MD, JD)",
-        "Other"
-      ],
-      required: true
-    }
+    const genderOtherContainer =
+      document.getElementById("gender-other-container");
 
-  ],
+    const educationOtherContainer =
+      document.getElementById("education-other-container");
 
-  button_label: "Continue",
+    genderSelect.addEventListener("change", function() {
+      genderOtherContainer.style.display =
+        genderSelect.value === "Other" ? "block" : "none";
+    });
+
+    educationSelect.addEventListener("change", function() {
+      educationOtherContainer.style.display =
+        educationSelect.value === "Other" ? "block" : "none";
+    });
+
+    const continueButton = document.querySelector(
+      "#jspsych-html-button-response-btngroup button"
+    );
+
+    continueButton.addEventListener("click", function(event) {
+
+      const consent = document.getElementById("consent").value;
+      const age = document.getElementById("age").value;
+      const gender = genderSelect.value;
+      const education = educationSelect.value;
+
+      const genderOther =
+        document.getElementById("gender-other").value.trim();
+
+      const educationOther =
+        document.getElementById("education-other").value.trim();
+
+      let errorMessage = "";
+
+      if (!consent) {
+        errorMessage = "Please answer the consent question.";
+      } else if (consent === "Yes" && !age) {
+        errorMessage = "Please select your age.";
+      } else if (consent === "Yes" && !gender) {
+        errorMessage = "Please select your gender.";
+      } else if (consent === "Yes" && gender === "Other" && !genderOther) {
+        errorMessage = "Please specify your gender.";
+      } else if (consent === "Yes" && !education) {
+        errorMessage = "Please select your education level.";
+      } else if (
+        consent === "Yes" &&
+        education === "Other" &&
+        !educationOther
+      ) {
+        errorMessage = "Please specify your education.";
+      }
+
+      if (errorMessage) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        alert(errorMessage);
+        return;
+      }
+
+      demographicResponses = {
+        consent: consent,
+        age: age,
+        gender: gender,
+        gender_other: gender === "Other" ? genderOther : "",
+        education: education,
+        education_other: education === "Other" ? educationOther : ""
+      };
+
+    }, true);
+
+  },
 
   on_finish: function(data) {
 
-    // Save demographic responses
-
-    demographicResponses = data.response || {};
-
-    // Add task identification
-
     data.task = "demographics";
-
-    // Add individual demographic values to the data
+    data.response = demographicResponses;
 
     Object.assign(data, demographicResponses);
 
-    // Stop the experiment if the participant does not consent
-
     if (demographicResponses.consent === "No") {
-
       jsPsych.endExperiment(
         "Thank you for your time. You have chosen not to participate in this study."
       );
-
     }
 
   }
