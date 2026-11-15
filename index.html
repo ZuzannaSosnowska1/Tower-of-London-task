@@ -284,7 +284,7 @@
 <script>
 "use strict";
 const GOOGLE_SCRIPT_URL =
-  "PASTE_YOUR_DEPLOYED_WEB_APP_URL_HERE";
+  "https://script.google.com/u/0/home/projects/1afyi3VYp04wL6PRAeRTgwNU43YfsDz_-UfLhpMW3tJ6HG1AtIFy5am7V/edit";
 // =========================================================
 // SETTINGS
 // =========================================================
@@ -415,8 +415,9 @@ const psiqSections = [
     items: [
       "a friend you know well",
       "a cat climbing a tree",
-      "a bonfire",
+      "a sunset",
       "the front door of your house"
+      "a bonfire"
     ]
   },
 
@@ -449,7 +450,7 @@ const psiqSections = [
     title: "Imagine the taste of:",
     items: [
       "mustard",
-      "soft towel",
+      "toothpaste",
       "lemon",
       "sea water",
       "black pepper"
@@ -749,9 +750,14 @@ const timeline = [];
 // 1. DEMOGRAPHIC QUESTIONNAIRE
 // =========================================================
 
+
+// =========================================================
+// 1. DEMOGRAPHIC QUESTIONNAIRE AND INFORMED CONSENT
+// =========================================================
+
 timeline.push({
 
-  type: jsPsychSurveyText,
+  type: jsPsychSurveyMultiChoice,
 
   preamble: `
 
@@ -760,11 +766,20 @@ timeline.push({
       <h2>Demographic Questionnaire</h2>
 
       <p>
-       Hello!
-      I'm a Cognitive Science student at Nicolaus Copernicus Univeristy in Toruń conducting research study on problem-solving
-      I would like to invite you to take part in this study.
-      Participation is voluntary and anonymous.
-        Please provide the following demographic information.
+        Hello!
+      </p>
+
+      <p>
+        I am a Cognitive Science student at Nicolaus Copernicus
+        University in Toruń, conducting a research study on
+        problem-solving.
+      </p>
+
+      <p>
+        I would like to invite you to take part in this study.
+        Participation is voluntary and anonymous.
+        Please read the consent question and provide
+        the following demographic information.
       </p>
 
     </div>
@@ -773,125 +788,50 @@ timeline.push({
 
   questions: [
 
-     <!-- Question 1 -->
-    <p><strong>1. Do you agree to participate in this study?</strong></p>
-
-    <label>
-        <input type="radio" name="consent" value="Yes" required>
-        Yes
-    </label><br>
-
-    <label>
-        <input type="radio" name="consent" value="No">
-        No
-    </label><br><br>
-
-
-    <!-- Question 2 -->
-    <p><strong>2. What is your age?</strong></p>
-
-    <label>
-        <input type="radio" name="age" value="18-24" required>
-        18–24 years
-    </label><br>
-
-    <label>
-        <input type="radio" name="age" value="25-34">
-        25–34 years
-    </label><br>
-
-    <label>
-        <input type="radio" name="age" value="35-44">
-        35–44 years
-    </label><br>
-
-    <label>
-        <input type="radio" name="age" value="45-54">
-        45–54 years
-    </label><br>
-
-    <label>
-        <input type="radio" name="age" value="55+">
-        55 years or above
-    </label><br><br>
-
-
-    <!-- Question 3 -->
-    <p><strong>3. What is your gender?</strong></p>
-
-    <label>
-        <input type="radio" name="gender" value="Female" required>
-        Female
-    </label><br>
-
-    <label>
-        <input type="radio" name="gender" value="Male">
-        Male
-    </label><br>
-
-    <label>
-        <input type="radio" name="gender" value="Non-binary">
-        Non-binary
-    </label><br>
-
-    <label>
-        <input type="radio" name="gender" value="Other">
-        Other
-    </label><br>
-
-    <label>
-        <input type="radio" name="gender" value="Prefer not to say">
-        Prefer not to say
-    </label><br><br>
-
-
-    <!-- Question 4 -->
-    <p><strong>4. What is your highest completed educational level?</strong></p>
-
-    <label>
-        <input type="radio" name="education" value="High school" required>
-        High school
-    </label><br>
-
-    <label>
-        <input type="radio" name="education" value="Undergraduate">
-        Undergraduate degree
-    </label><br>
-
-    <label>
-        <input type="radio" name="education" value="Graduate">
-        Graduate degree (Master's)
-    </label><br>
-
-    <label>
-        <input type="radio" name="education" value="Doctoral or professional degree">
-        Doctoral or professional degree (e.g., PhD, MD, JD)
-    </label><br>
-
-    <label>
-        <input type="radio" name="education" value="Other">
-        Other
-
-    
     {
-      prompt: "Age (in years):",
+      prompt: "1. Do you agree to participate in this study?",
+      name: "consent",
+      options: ["Yes", "No"],
+      required: true
+    },
+
+    {
+      prompt: "2. What is your age?",
       name: "age",
-      required: true,
-      placeholder: "Enter your age"
+      options: [
+        "18–24 years",
+        "25–34 years",
+        "35–44 years",
+        "45–54 years",
+        "55 years or above"
+      ],
+      required: true
     },
 
     {
-      prompt: "Gender:",
+      prompt: "3. What is your gender?",
       name: "gender",
-      required: true,
-      placeholder: "Enter your answer or prefer not to say"
+      options: [
+        "Female",
+        "Male",
+        "Non-binary",
+        "Other",
+        "Prefer not to say"
+      ],
+      required: true
     },
 
     {
-      prompt: "Highest level of education completed:",
+      prompt: "4. What is your highest completed educational level?",
       name: "education",
-      required: true,
-      placeholder: "Enter your answer"
+      options: [
+        "High school",
+        "Undergraduate degree",
+        "Graduate degree (Master's)",
+        "Doctoral or professional degree (e.g., PhD, MD, JD)",
+        "Other"
+      ],
+      required: true
     }
 
   ],
@@ -900,11 +840,27 @@ timeline.push({
 
   on_finish: function(data) {
 
+    // Save demographic responses
+
     demographicResponses = data.response || {};
+
+    // Add task identification
 
     data.task = "demographics";
 
+    // Add individual demographic values to the data
+
     Object.assign(data, demographicResponses);
+
+    // Stop the experiment if the participant does not consent
+
+    if (demographicResponses.consent === "No") {
+
+      jsPsych.endExperiment(
+        "Thank you for your time. You have chosen not to participate in this study."
+      );
+
+    }
 
   }
 
