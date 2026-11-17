@@ -714,12 +714,7 @@ const jsPsych = initJsPsych({
     }
 
     // Get participant ID.
-    const participantTrial = allData.find(
-      trial => trial.participant_id
-    );
-
-    const savedParticipantId =
-      participantTrial?.participant_id || "";
+    const savedParticipantId = participantId;
 
     if (!savedParticipantId) {
       console.error("Participant ID is missing. Data not submitted.");
