@@ -338,18 +338,43 @@ body {
   margin: 0 auto;
 }
   
-  
+  /* Participant ID - visible throughout the study */
+#participant-id-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: #e8eef8;
+  color: #2457a6;
+  padding: 10px;
+  text-align: center;
+  font-size: 14px;
+  z-index: 10000;
+  box-sizing: border-box;
+}
+
+/* Leave space for the ID banner */
+body {
+  padding-top: 45px;
+  padding-bottom: 55px;
+}
   
   </style>
+
+
 </head>
 
 <body>
 
 <div class="study-contact">
   Study contact: Zuzanna Sosnowska |
-  <a href="mailto:bibibibibi@gmail.com">zuzannasosnowska023@gmail.com</a>
+  <a href="zuzannasosnowska023@gmail.com">zuzannasosnowska023@gmail.com</a>
 </div>
 
+  <div id="participant-id-banner">
+  Your participant ID:
+  <strong id="participant-id-value"></strong>
+</div>
 
   
 <div id="experiment"></div>
@@ -376,11 +401,17 @@ const BALL_COLORS = {
   3: "#FF0000"
 };
 
-let participantId = "";
+function generateParticipantId() {
+  return "TL-" + crypto.randomUUID().toUpperCase();
+}
+
+let participantId = generateParticipantId();
 let demographicResponses = {};
 let psiqResponses = {};
 
-
+document.getElementById("participant-id-value").textContent =
+  participantId;
+  
 // =========================================================
 // TOWER OF LONDON ROUNDS
 // =========================================================
@@ -968,55 +999,8 @@ timeline.push({
 // 2. UNIQUE PARTICIPANT ID
 // =========================================================
 
-timeline.push({
 
-  type: jsPsychSurveyText,
 
-  preamble: `
-
-    <div class="instructions">
-
-      <h2>Participant Identification</h2>
-
-      <p>
-        Please enter your unique participant identification code.
-      </p>
-
-      <p>
-        Make sure you enter the identification code provided
-        to you by the researcher.
-      </p>
-
-    </div>
-
-  `,
-
-  questions: [
-
-    {
-      prompt: "Unique Participant ID:",
-      name: "participant_id",
-      required: true,
-      placeholder: "Enter your participant ID"
-    }
-
-  ],
-
-  button_label: "Continue",
-
-  on_finish: function(data) {
-
-    const response = data.response || {};
-
-    participantId = String(
-      response.participant_id || ""
-    ).trim();
-
-    data.participant_id = participantId;
-
-  }
-
-});
 
 
 // =========================================================
